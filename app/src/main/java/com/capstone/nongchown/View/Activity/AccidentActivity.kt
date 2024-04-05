@@ -1,4 +1,4 @@
-package com.capstone.nongchown
+package com.capstone.nongchown.View.Activity
 
 import android.content.ComponentName
 import android.content.Context
@@ -10,6 +10,8 @@ import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.ComponentActivity
+import com.capstone.nongchown.ViewModel.Service.ForegroundService
+import com.capstone.nongchown.R
 
 class AccidentActivity : ComponentActivity() {
 
@@ -48,7 +50,7 @@ class AccidentActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        AccidentActivity.instance = this
+        instance = this
         Intent(this, ForegroundService::class.java).also { intent ->
             bindService(intent, connection, Context.BIND_AUTO_CREATE)
         }

@@ -1,4 +1,4 @@
-package com.capstone.nongchown
+package com.capstone.nongchown.View.Activity
 
 import android.content.Context
 import android.content.Intent
@@ -7,6 +7,8 @@ import android.os.Build
 import android.os.Bundle
 import android.widget.Button
 import androidx.activity.ComponentActivity
+import com.capstone.nongchown.ViewModel.Service.ForegroundService
+import com.capstone.nongchown.R
 
 class AccidentTestActivity : ComponentActivity() {
     private lateinit var sharedPreferences: SharedPreferences
