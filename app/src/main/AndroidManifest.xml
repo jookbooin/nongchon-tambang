@@ -2,6 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- SDK 31 이상을 타겟팅 하는 앱 Bluetooth 권한 (Android 12+) -->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />  <!-- 블루투스 기기를 검색  -->
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" /> <!-- 이미 페어링된 블루투스 기기와 통신 -->
+    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" /> <!-- 현재 기기를 다른 블루투스 기기에서 검색 가능하도록 설정 -->
+
+    <!-- SDK 30 이하를 타겟팅 하는 앱 Bluetooth 권한 -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /> <!-- 정밀 위치  -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /> <!-- 대략 위치  -->
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -12,6 +21,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Nongchown"
         tools:targetApi="31">
+        <activity
+            android:name=".BluetoothMain"
+            android:exported="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true">
