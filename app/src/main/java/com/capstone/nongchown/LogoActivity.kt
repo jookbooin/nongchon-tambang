@@ -18,7 +18,7 @@ class LogoActivity : ComponentActivity() {
         android.os.Handler().postDelayed({
             Log.d("test", "title2")
             // 다른 액티비티를 실행하는 Intent 생성
-            val intent = Intent(this, AccidentTestActivity::class.java)
+            val intent = Intent(this,MainActivity::class.java)
             startActivity(intent)
 
             // 현재 액티비티를 종료

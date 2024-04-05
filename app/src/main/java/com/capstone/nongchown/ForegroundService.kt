@@ -88,7 +88,7 @@ class ForegroundService : Service() {
                         nowContext,
                         0,
                         accidentIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT
+                        PendingIntent.FLAG_IMMUTABLE
                     )
 
                     val updatedNotification = NotificationCompat.Builder(nowContext, "1")
