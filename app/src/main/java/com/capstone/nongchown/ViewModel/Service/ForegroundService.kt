@@ -1,4 +1,4 @@
-package com.capstone.nongchown
+package com.capstone.nongchown.ViewModel.Service
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -19,6 +19,9 @@ import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.capstone.nongchown.R
+import com.capstone.nongchown.View.Activity.AccidentActivity
+import com.capstone.nongchown.View.Activity.AccidentTestActivity
 
 class ForegroundService : Service() {
 

@@ -1,4 +1,4 @@
-package com.capstone.nongchown
+package com.capstone.nongchown.View.Activity
 
 import android.Manifest
 import android.bluetooth.BluetoothAdapter
@@ -14,8 +14,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.capstone.nongchown.R
 
-class BluetoothMain : AppCompatActivity() {
+class BluetoothActivity : AppCompatActivity() {
 
     private var PERMISSION_REQUEST_CODE_S = 32 // 31 이상
     private var PERMISSION_REQUEST_CODE = 30

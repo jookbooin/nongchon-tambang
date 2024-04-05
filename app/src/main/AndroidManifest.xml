@@ -25,19 +25,19 @@
         android:theme="@style/Theme.Nongchown"
         tools:targetApi="31">
         <service
-            android:name=".ForegroundService"
+            android:name=".ViewModel.Service.ForegroundService"
             android:enabled="true">
 
         </service>
 
         <activity
-            android:name=".BluetoothMain"
+            android:name=".View.Activity.BluetoothActivity"
             android:exported="false" />
         <activity
-            android:name=".MainActivity"
+            android:name=".View.Activity.MainActivity"
             android:exported="true"/>
         <activity
-            android:name=".LogoActivity"
+            android:name=".View.Activity.LogoActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.Nongchown">
@@ -47,10 +47,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".AccidentActivity">
+        <activity android:name=".View.Activity.AccidentActivity">
 
         </activity>
-        <activity android:name=".AccidentTestActivity">
+        <activity android:name=".View.Activity.AccidentTestActivity">
 
         </activity>
 

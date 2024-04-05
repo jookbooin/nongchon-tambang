@@ -1,4 +1,4 @@
-package com.capstone.nongchown
+package com.capstone.nongchown.View.Activity
 
 import android.content.Intent
 import android.os.Bundle
@@ -8,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.capstone.nongchown.R
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,7 +24,7 @@ class MainActivity : AppCompatActivity() {
         val btnBluetooth: Button = findViewById(R.id.btnbluetooth)
         btnBluetooth.setOnClickListener {
             Log.v("setOnClick-MainActivity","btn")
-            val intent = Intent(this, BluetoothMain::class.java)
+            val intent = Intent(this, BluetoothActivity::class.java)
             startActivity(intent)
         }
     }
