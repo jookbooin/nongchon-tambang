@@ -64,13 +64,23 @@ class BluetoothActivity : AppCompatActivity() {
             /**
              * 2. 블루투스 활성화 check
              * */
-            if(checkBluetoothState() == BluetoothState.DISABLED) {
-                val blutoothIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-                startForResult.launch(blutoothIntent)
-            }
+            when (checkBluetoothState()) {
+                BluetoothState.ENABLED -> addDevice()
+                BluetoothState.DISABLED -> {
+                    val bluetoothIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                    startForResult.launch(bluetoothIntent)
+                }
 
+                else -> {
+                    Toast.makeText(this, "블루투스를 지원하지 않는 장비입니다.", Toast.LENGTH_SHORT).show()
+                } // NOT_SUPPORT 상태일 때의 동작 (예: 오류 메시지 표시)
+            }
         }
 
+    }
+
+    fun addDevice() {
+        Log.d("addDevice", "페이지 이동")
     }
 
     /** 권한 관련 코드들 모을 수 있을 듯? */
@@ -159,7 +169,6 @@ class BluetoothActivity : AppCompatActivity() {
     fun checkBluetoothState(): BluetoothState {
 
         if (!isBluetoothSupport()) {
-            Toast.makeText(this, "블루투스를 지원하지 않는 장비입니다.", Toast.LENGTH_SHORT).show()
             finish()
             return BluetoothState.NOT_SUPPORT // NOT_SUPPORT
         }
@@ -173,15 +182,11 @@ class BluetoothActivity : AppCompatActivity() {
         return BluetoothState.ENABLED      // ENABLED
     }
 
-
-    // 외부로 옮길 것들
     val startForResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
         if (result.resultCode == RESULT_OK) {
             Log.d("Bluetooth", "블루투스 활성화")
-//            bluetoothViewModel.setBluetoothDenied(false)
         } else if (result.resultCode == RESULT_CANCELED) {
             Log.d("Bluetooth", "사용자 블루투스 활성화 거부")
-//            bluetoothViewModel.setBluetoothDenied(true)
         }
     }
 
@@ -195,7 +200,6 @@ class BluetoothActivity : AppCompatActivity() {
         }
     }
 
-    // repository
     fun isBluetoothEnabled(): Boolean {
         return if (bluetoothAdapter?.isEnabled == false) {   // 기기의 블루투스 비활성화 상태
             false
