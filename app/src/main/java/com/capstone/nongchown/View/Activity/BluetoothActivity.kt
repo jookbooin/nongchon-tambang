@@ -3,7 +3,6 @@ package com.capstone.nongchown.View.Activity
 
 import android.Manifest
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -15,29 +14,20 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.capstone.nongchown.Constants
 import com.capstone.nongchown.Model.Enum.BluetoothState
 import com.capstone.nongchown.R
+import com.capstone.nongchown.View.Activity.BaseActivity.BluetoothBaseActivity
 import com.capstone.nongchown.ViewModel.BluetoothViewModel
 import moveActivity
 import showToast
 
-class BluetoothActivity : AppCompatActivity() {
+class BluetoothActivity : BluetoothBaseActivity() {
 
     val bluetoothViewModel by viewModels<BluetoothViewModel>()   // Fragment KTX 적용
-
-    // context에 위치
-    private val bluetoothManager: BluetoothManager by lazy {
-        getSystemService(BluetoothManager::class.java)
-    }
-
-    private val bluetoothAdapter: BluetoothAdapter? by lazy {
-        bluetoothManager.adapter
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

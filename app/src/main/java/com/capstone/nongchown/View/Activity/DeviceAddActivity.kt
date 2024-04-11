@@ -3,12 +3,12 @@ package com.capstone.nongchown.View.Activity
 import android.bluetooth.BluetoothDevice
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.capstone.nongchown.R
+import com.capstone.nongchown.View.Activity.BaseActivity.BluetoothBaseActivity
 
-class DeviceAddActivity : AppCompatActivity() {
+class DeviceAddActivity : BluetoothBaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
