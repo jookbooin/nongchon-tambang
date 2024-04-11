@@ -11,7 +11,6 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -24,6 +23,8 @@ import com.capstone.nongchown.Constants
 import com.capstone.nongchown.Model.Enum.BluetoothState
 import com.capstone.nongchown.R
 import com.capstone.nongchown.ViewModel.BluetoothViewModel
+import moveActivity
+import showToast
 
 class BluetoothActivity : AppCompatActivity() {
 
@@ -65,22 +66,16 @@ class BluetoothActivity : AppCompatActivity() {
              * 2. 블루투스 활성화 check
              * */
             when (checkBluetoothState()) {
-                BluetoothState.ENABLED -> addDevice()
+                BluetoothState.ENABLED -> moveActivity(DeviceAddActivity::class.java)
                 BluetoothState.DISABLED -> {
                     val bluetoothIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
                     startForResult.launch(bluetoothIntent)
                 }
 
-                else -> {
-                    Toast.makeText(this, "블루투스를 지원하지 않는 장비입니다.", Toast.LENGTH_SHORT).show()
-                } // NOT_SUPPORT 상태일 때의 동작 (예: 오류 메시지 표시)
+                else -> showToast("블루투스를 지원하지 않는 장비입니다.")
             }
         }
 
-    }
-
-    fun addDevice() {
-        Log.d("addDevice", "페이지 이동")
     }
 
     /** 권한 관련 코드들 모을 수 있을 듯? */
@@ -137,7 +132,7 @@ class BluetoothActivity : AppCompatActivity() {
 
                 if (grantResults.isNotEmpty() && isPermissionGranted(grantResults)) {
                     Log.d("RequestPermission", "모든 권한을 허용하였습니다.")
-                    Toast.makeText(this, "모든 권한을 허용하였습니다.", Toast.LENGTH_SHORT).show()
+                    showToast("모든 권한을 허용하였습니다.")
                 } else {
                     // 위치 권한
                     if (grantResults[2] == PackageManager.PERMISSION_GRANTED) {

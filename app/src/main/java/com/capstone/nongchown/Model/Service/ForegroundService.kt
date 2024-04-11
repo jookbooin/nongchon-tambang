@@ -1,4 +1,4 @@
-package com.capstone.nongchown.ViewModel.Service
+package com.capstone.nongchown.Model.Service
 
 import android.Manifest
 import android.annotation.SuppressLint

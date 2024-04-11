@@ -5,15 +5,16 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".View.Activity.DeviceActivity">
+    tools:context=".View.Activity.DeviceAddActivity">
 
     <TextView
-        android:id="@+id/textView4"
+        android:id="@+id/textView5"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="기기 찾는 중"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:text="기기를 찾고 있습니다."
+        android:textSize="30dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginTop="80dp"/>
 </androidx.constraintlayout.widget.ConstraintLayout>
