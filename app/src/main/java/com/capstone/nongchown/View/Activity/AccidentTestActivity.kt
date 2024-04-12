@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.widget.Button
 import androidx.activity.ComponentActivity
 import com.capstone.nongchown.Model.ForegroundService
+
 import com.capstone.nongchown.R
 
 class AccidentTestActivity : ComponentActivity() {

@@ -3,16 +3,13 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-
-    <!-- SDK 31 이상을 타겟팅 하는 앱 Bluetooth 권한 (Android 12+) -->
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />  <!-- 블루투스 기기를 검색  -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" /> <!-- SDK 31 이상을 타겟팅 하는 앱 Bluetooth 권한 (Android 12+) -->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" /> <!-- 블루투스 기기를 검색 -->
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" /> <!-- 이미 페어링된 블루투스 기기와 통신 -->
     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" /> <!-- 현재 기기를 다른 블루투스 기기에서 검색 가능하도록 설정 -->
-
     <!-- SDK 30 이하를 타겟팅 하는 앱 Bluetooth 권한 -->
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /> <!-- 정밀 위치  -->
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /> <!-- 대략 위치  -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /> <!-- 정밀 위치 -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
         android:allowBackup="true"
@@ -28,14 +25,20 @@
             android:name=".Model.ForegroundService"
             android:enabled="true">
 
-        </service>
+        <activity
+            android:name=".View.Activity.BaseActivity.BluetoothBaseActivity"
+            android:exported="false" />
+        <activity
+            android:name=".View.Activity.DeviceScanActivity"
+            android:exported="false" />
+
 
         <activity
             android:name=".View.Activity.BluetoothActivity"
             android:exported="false" />
         <activity
             android:name=".View.Activity.MainActivity"
-            android:exported="true"/>
+            android:exported="true" />
         <activity
             android:name=".View.Activity.LogoActivity"
             android:exported="true"
@@ -47,13 +50,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".View.Activity.AccidentActivity">
-
-        </activity>
-        <activity android:name=".View.Activity.AccidentTestActivity">
-
-        </activity>
-
+        <activity android:name=".View.Activity.AccidentActivity" />
+        <activity android:name=".View.Activity.AccidentTestActivity" />
     </application>
 
 </manifest>
