@@ -1,6 +1,5 @@
 package com.capstone.nongchown.View.Activity
 
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
@@ -9,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.capstone.nongchown.R
+import moveActivity
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,8 +24,7 @@ class MainActivity : AppCompatActivity() {
         val btnBluetooth: Button = findViewById(R.id.btnbluetooth)
         btnBluetooth.setOnClickListener {
             Log.v("setOnClick-MainActivity","btn")
-            val intent = Intent(this, BluetoothActivity::class.java)
-            startActivity(intent)
+            moveActivity(BluetoothActivity::class.java)
         }
     }
     // 04-01 commit test ( branch )

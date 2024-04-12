@@ -10,7 +10,7 @@ import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.ComponentActivity
-import com.capstone.nongchown.ViewModel.Service.ForegroundService
+import com.capstone.nongchown.Model.Service.ForegroundService
 import com.capstone.nongchown.R
 
 class AccidentActivity : ComponentActivity() {
