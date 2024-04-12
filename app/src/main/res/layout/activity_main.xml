@@ -6,15 +6,20 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    tools:context=".View.Activity.MainActivity">
 
     <Button
         android:id="@+id/btnuser_profile"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="user profile"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:text="user profile" />
+
+
+    <Button
+        android:id="@+id/btnbluetooth"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="bluetooth"/>
+
 </LinearLayout>
