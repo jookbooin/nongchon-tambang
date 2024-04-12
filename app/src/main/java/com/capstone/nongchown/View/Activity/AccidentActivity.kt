@@ -10,8 +10,11 @@ import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.ComponentActivity
-import com.capstone.nongchown.ViewModel.Service.ForegroundService
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
+import com.capstone.nongchown.Model.ForegroundService
 import com.capstone.nongchown.R
+import com.capstone.nongchown.ViewModel.Service.AccidentViewModel
 
 class AccidentActivity : ComponentActivity() {
 
@@ -25,6 +28,7 @@ class AccidentActivity : ComponentActivity() {
 
     private var foregroundService: ForegroundService? = null
     var countData = 0
+
 
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
@@ -56,29 +60,32 @@ class AccidentActivity : ComponentActivity() {
         }
         Log.d("test", "accident")
         setContentView(R.layout.accident_notification)
+
+        val accidentViewModel = ViewModelProvider(this).get(AccidentViewModel::class.java)
+        accidentViewModel.getTimerCount().observe(this,Observer{count ->
+            updateTimerText(count)
+        })
+
         val intent = intent
         countData = intent?.getIntExtra("timer", 0)!!
         if (countData != 0) {
             if (countData != null) {
                 updateTimerText(countData)
-
-
             }
         }
 
 
+
+
         findViewById<Button>(R.id.ok_btn).setOnClickListener {
             Log.d("test", "btnON")
-            foregroundService?.userSafe()
+            accidentViewModel.userSafe()
+            //foregroundService?.userSafe()
 
         }
     }
 
     public fun updateTimerText(count: Int) {
         findViewById<TextView>(R.id.timer).text = count.toString()
-        if (count >= 10) {
-
-
-        }
     }
 }
