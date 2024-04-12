@@ -1,10 +1,14 @@
-package com.capstone.nongchown
+package com.capstone.nongchown.View.Activity
 
 import android.os.Bundle
+import android.util.Log
+import android.widget.Button
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.capstone.nongchown.R
+import com.capstone.nongchown.Utils.moveActivity
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -15,6 +19,12 @@ class MainActivity : AppCompatActivity() {
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
+        }
+
+        val btnUserProfile: Button = findViewById(R.id.btnuser_profile)
+        btnUserProfile.setOnClickListener {
+            Log.v("setOnClick-MainActivity","btn")
+            moveActivity(UserProfileActivity::class.java)
         }
     }
     // 04-01 commit test ( branch )
