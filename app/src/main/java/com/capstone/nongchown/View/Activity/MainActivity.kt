@@ -1,6 +1,9 @@
 package com.capstone.nongchown.View.Activity
 
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
@@ -8,9 +11,12 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.capstone.nongchown.Model.ForegroundService
 import com.capstone.nongchown.R
+import moveActivity
 
 class MainActivity : AppCompatActivity() {
+    private lateinit var sharedPreferences: SharedPreferences
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -24,8 +30,32 @@ class MainActivity : AppCompatActivity() {
         val btnBluetooth: Button = findViewById(R.id.btnbluetooth)
         btnBluetooth.setOnClickListener {
             Log.v("setOnClick-MainActivity","btn")
-            val intent = Intent(this, BluetoothActivity::class.java)
-            startActivity(intent)
+            moveActivity(BluetoothActivity::class.java)
+        }
+
+        sharedPreferences = getSharedPreferences("isFirst", Context.MODE_PRIVATE)
+        val isFirstRun = sharedPreferences.getBoolean("isFirstRun", true)
+
+        if (isFirstRun) {
+
+            val serviceIntent = Intent(this@MainActivity, ForegroundService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent)
+            } else {
+                startService(serviceIntent)
+            }
+            with(sharedPreferences.edit()) {
+                putBoolean("isFirstRun", false)
+                apply()
+            }
+        }
+
+
+        val btnAccident: Button = findViewById(R.id.btnAccident)
+        btnAccident.setOnClickListener{
+            var accidentIntent = Intent(this@MainActivity, AccidentActivity::class.java)
+            startActivity(accidentIntent)
+
         }
     }
     // 04-01 commit test ( branch )

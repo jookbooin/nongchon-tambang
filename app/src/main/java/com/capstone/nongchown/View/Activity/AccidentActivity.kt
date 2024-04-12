@@ -10,13 +10,15 @@ import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.ComponentActivity
+import androidx.activity.viewModels
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
 import com.capstone.nongchown.Model.ForegroundService
 import com.capstone.nongchown.R
-import com.capstone.nongchown.ViewModel.Service.AccidentViewModel
+import com.capstone.nongchown.ViewModel.AccidentViewModel
 
 class AccidentActivity : ComponentActivity() {
+
+    val accidentViewModel by viewModels<AccidentViewModel>()
 
     companion object {
         private var instance: AccidentActivity? = null
@@ -61,8 +63,8 @@ class AccidentActivity : ComponentActivity() {
         Log.d("test", "accident")
         setContentView(R.layout.accident_notification)
 
-        val accidentViewModel = ViewModelProvider(this).get(AccidentViewModel::class.java)
-        accidentViewModel.getTimerCount().observe(this,Observer{count ->
+
+        accidentViewModel.getTimerCount().observe(this, Observer{ count ->
             updateTimerText(count)
         })
 
