@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".View.Activity.DeviceAddActivity">
+    tools:context=".View.Activity.DeviceScanActivity">
 
     <TextView
         android:id="@+id/textView5"
@@ -17,4 +17,16 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         android:layout_marginTop="80dp"/>
+
+    <Button
+        android:id="@+id/btncancelscan"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:text="취 소"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginBottom="20dp"
+        android:layout_marginLeft="40dp"
+        android:layout_marginRight="40dp"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

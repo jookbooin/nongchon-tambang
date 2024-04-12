@@ -25,7 +25,7 @@
             android:name=".View.Activity.BaseActivity.BluetoothBaseActivity"
             android:exported="false" />
         <activity
-            android:name=".View.Activity.DeviceAddActivity"
+            android:name=".View.Activity.DeviceScanActivity"
             android:exported="false" />
 
         <service

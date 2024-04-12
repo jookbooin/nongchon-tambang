@@ -56,7 +56,7 @@ class BluetoothActivity : BluetoothBaseActivity() {
              * 2. 블루투스 활성화 check
              * */
             when (checkBluetoothState()) {
-                BluetoothState.ENABLED -> moveActivity(DeviceAddActivity::class.java)
+                BluetoothState.ENABLED -> moveActivity(DeviceScanActivity::class.java)
                 BluetoothState.DISABLED -> {
                     val bluetoothIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
                     startForResult.launch(bluetoothIntent)
