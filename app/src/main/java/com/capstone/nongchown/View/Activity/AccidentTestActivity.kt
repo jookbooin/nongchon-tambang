@@ -7,7 +7,8 @@ import android.os.Build
 import android.os.Bundle
 import android.widget.Button
 import androidx.activity.ComponentActivity
-import com.capstone.nongchown.Model.Service.ForegroundService
+import com.capstone.nongchown.Model.ForegroundService
+
 import com.capstone.nongchown.R
 
 class AccidentTestActivity : ComponentActivity() {
@@ -23,7 +24,6 @@ class AccidentTestActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        instance = this
         setContentView(R.layout.layout)
 
         // 최초 한번만 포그라운드 서비스 실행
