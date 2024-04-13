@@ -1,4 +1,5 @@
-package com.capstone.nongchown.Model.Service
+
+package com.capstone.nongchown.Model
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -169,5 +170,9 @@ class ForegroundService : Service() {
 
     public fun changeTimer(timer: Int) {
         count = timer
+    }
+
+    fun getTimerCount() :Int{
+        return count
     }
 }

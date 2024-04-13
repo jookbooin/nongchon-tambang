@@ -20,6 +20,12 @@
         android:id="@+id/btnbluetooth"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="bluetooth"/>
+        android:text="bluetooth" />
+
+    <Button
+        android:id="@+id/btnAccident"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Accident" />
 
 </LinearLayout>
