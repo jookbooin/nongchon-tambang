@@ -30,7 +30,7 @@
             android:name=".View.Activity.BaseActivity.BluetoothBaseActivity"
             android:exported="false" />
         <activity
-            android:name=".View.Activity.DeviceScanActivity"
+            android:name=".View.Activity.DeviceDiscoveryActivity"
             android:exported="false" />
 
 

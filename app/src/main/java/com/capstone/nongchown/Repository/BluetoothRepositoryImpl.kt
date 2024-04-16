@@ -24,7 +24,7 @@ class BluetoothRepositoryImpl @Inject constructor(private val context: Context,
 
         // 기존에 탐지된 장치 리스트 초기화
         if(_discoveredDeviceList.value.isNotEmpty()) {
-            Log.d("isNotEmpty", "INIT LIST")
+            Log.d("[INIT]", "INIT LIST")
             _discoveredDeviceList.value = emptyList()
         }
 
@@ -56,19 +56,20 @@ class BluetoothRepositoryImpl @Inject constructor(private val context: Context,
     }
 
     override fun stopDiscovery() {
-        Log.d("stopDiscovery", "DISCOVERY STOP")
-        Log.d("stopDiscovery", "UNREGISTER RECEIVER")
+        Log.d("[stopDiscovery]", "DISCOVERY STOP")
+        Log.d("[stopDiscovery]", "UNREGISTER RECEIVER")
         context.unregisterReceiver(deviceScanReceiver)
     }
 
     @SuppressLint("MissingPermission")
     override fun cancelDiscovery() {
-        Log.d("cancelDiscovery", "DISCOVERY CANCEL")
+        Log.d("[cancelDiscovery]", "DISCOVERY CANCEL")
         bluetoothAdapter?.cancelDiscovery()
     }
 
     @Suppress("DEPRECATION", "MissingPermission")
     private val deviceScanReceiver = object : BroadcastReceiver() {
+        val tempDeviceList = mutableListOf<BluetoothDevice>()
         override fun onReceive(context: Context?, intent: Intent?) {
 
             var action = ""
@@ -78,18 +79,19 @@ class BluetoothRepositoryImpl @Inject constructor(private val context: Context,
 
             when (action) {
                 BluetoothAdapter.ACTION_STATE_CHANGED -> {
-                    Log.d("scanDevice1", "STATE CHANGED")
+                    Log.d("[ACTION]", "STATE CHANGED")
                 }
 
                 BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {
-                    Log.d("scanDevice2", "DISCOVERY STARTED")
+                    Log.d("[ACTION]", "DISCOVERY STARTED")
                 }
 
                 BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
-                    Log.d("scanDevice3", "DISCOVERY FINISHED")
-                    Log.d("scanDeviceResult", "DISCOVERY RESULT")
+                    Log.d("[ACTION]", "DISCOVERY FINISHED")
+                    Log.d("[RESULT]", "DISCOVERY RESULT")
+                    _discoveredDeviceList.value = tempDeviceList
                     _discoveredDeviceList.value.forEach { device ->
-                        Log.d("DiscoveredDevice", "Name: ${device.name}, Address: ${device.address}")
+                        Log.d("[DiscoveredDevice]", "Name: ${device.name}, Address: ${device.address}")
                     }
                 }
 
@@ -98,16 +100,19 @@ class BluetoothRepositoryImpl @Inject constructor(private val context: Context,
                     device?.let{
                         // 로그 찍기 용
                         if(it.name != null ){
-                            Log.d("scanDevice4", "${device.name} ${device.address}")
+                            Log.d("[ACTION]", "Name: ${device.name}, Address: ${device.address}")
                         }
 
                         // 중복 방지
-                        if(it.name != null && !_discoveredDeviceList.value.contains(it)){
-                            val newList = _discoveredDeviceList.value.toMutableList().apply {
-                                this.add(it)
-                            }
-                            _discoveredDeviceList.value = newList
+                        if(it.name != null && !tempDeviceList.contains(it)){
+                            tempDeviceList.add(it)
                         }
+//                        if(it.name != null && !_discoveredDeviceList.value.contains(it)){
+//                            val newList = _discoveredDeviceList.value.toMutableList().apply {
+//                                this.add(it)
+//                            }
+//                            _discoveredDeviceList.value = newList
+//                        }
                     }
                 }
             }

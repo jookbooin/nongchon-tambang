@@ -35,7 +35,7 @@ class BluetoothActivity : BluetoothBaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContentView(R.layout.activity_bluethooth_main)
+        setContentView(R.layout.activity_bluethooth)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
@@ -59,7 +59,7 @@ class BluetoothActivity : BluetoothBaseActivity() {
              * 2. 블루투스 활성화 check
              * */
             when (checkBluetoothState()) {
-                BluetoothState.ENABLED -> moveActivity(DeviceScanActivity::class.java)
+                BluetoothState.ENABLED -> moveActivity(DeviceDiscoveryActivity::class.java)
                 BluetoothState.DISABLED -> {
                     val bluetoothIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
                     startForResult.launch(bluetoothIntent)

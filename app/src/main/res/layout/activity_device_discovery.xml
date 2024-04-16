@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".View.Activity.DeviceScanActivity">
+    tools:context=".View.Activity.DeviceDiscoveryActivity">
 
     <TextView
         android:id="@+id/textView5"
@@ -19,7 +19,7 @@
         android:layout_marginTop="80dp"/>
 
     <Button
-        android:id="@+id/btncancelscan"
+        android:id="@+id/btncanceldiscovery"
         android:layout_height="wrap_content"
         android:layout_width="match_parent"
         android:text="취 소"
