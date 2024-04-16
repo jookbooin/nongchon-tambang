@@ -22,9 +22,12 @@ import com.capstone.nongchown.Model.Enum.BluetoothState
 import com.capstone.nongchown.R
 import com.capstone.nongchown.View.Activity.BaseActivity.BluetoothBaseActivity
 import com.capstone.nongchown.ViewModel.BluetoothViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import moveActivity
 import showToast
 
+
+@AndroidEntryPoint
 class BluetoothActivity : BluetoothBaseActivity() {
 
     val bluetoothViewModel by viewModels<BluetoothViewModel>()   // Fragment KTX 적용
