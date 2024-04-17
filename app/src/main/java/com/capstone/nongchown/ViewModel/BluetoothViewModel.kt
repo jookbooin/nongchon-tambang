@@ -39,6 +39,11 @@ class BluetoothViewModel @Inject constructor(private val bluetoothRepository: Bl
         bluetoothRepository.cancelDiscovery()
     }
 
+    fun connectToDevice() {
+        bluetoothRepository.connectToDevice()
+
+    }
+
     sealed class DiscoveryState {
         object Loading : DiscoveryState()
         data class Success(val devices: List<BluetoothDevice>) : DiscoveryState()

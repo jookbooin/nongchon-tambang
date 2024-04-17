@@ -12,22 +12,17 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 
-class BluetoothRepositoryImpl @Inject constructor(private val context: Context,
-                                                  private val bluetoothAdapter: BluetoothAdapter) : BluetoothRepository {
+class BluetoothRepositoryImpl @Inject constructor(
+    private val context: Context,
+    private val bluetoothAdapter: BluetoothAdapter
+) : BluetoothRepository {
 
-//    private var deviceScanReceiver: BroadcastReceiver? = null // null 초기화 : 필요한 시점까지 객체의 생성을 늦춘다.
+    //    private var deviceScanReceiver: BroadcastReceiver? = null // null 초기화 : 필요한 시점까지 객체의 생성을 늦춘다.
     private val _discoveredDeviceList = MutableStateFlow<List<BluetoothDevice>>(emptyList())
     private val _pairedDeviceList = MutableStateFlow<List<BluetoothDevice>>(emptyList())
 
     @SuppressLint("MissingPermission")
     override fun startDiscovery(): MutableStateFlow<List<BluetoothDevice>> {
-
-        // 기존에 탐지된 장치 리스트 초기화
-        if(_discoveredDeviceList.value.isNotEmpty()) {
-            Log.d("[INIT]", "INIT LIST")
-            _discoveredDeviceList.value = emptyList()
-        }
-
         val filter = IntentFilter()
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED) //블루투스 상태변화 액션
         filter.addAction(BluetoothDevice.ACTION_FOUND) //기기 검색됨
@@ -48,16 +43,20 @@ class BluetoothRepositoryImpl @Inject constructor(private val context: Context,
             }
             // Get the list of paired devices
             val pairedDevices: Set<BluetoothDevice> = bluetoothAdapter.bondedDevices
-            _pairedDeviceList.value= pairedDevices.toList()
+            _pairedDeviceList.value = pairedDevices.toList()
         } else {
             // Bluetooth is not supported on this device
         }
         return _pairedDeviceList
     }
 
+    override fun connectToDevice() {
+        Log.d("[connectToDevice]", "CONNECT TO DEVICE")
+    }
+
     override fun stopDiscovery() {
         Log.d("[stopDiscovery]", "DISCOVERY STOP")
-        Log.d("[stopDiscovery]", "UNREGISTER RECEIVER")
+        Log.d("[unregisterReceiver]", "UNREGISTER RECEIVER")
         context.unregisterReceiver(deviceScanReceiver)
     }
 
@@ -66,6 +65,7 @@ class BluetoothRepositoryImpl @Inject constructor(private val context: Context,
         Log.d("[cancelDiscovery]", "DISCOVERY CANCEL")
         bluetoothAdapter?.cancelDiscovery()
     }
+
 
     @Suppress("DEPRECATION", "MissingPermission")
     private val deviceScanReceiver = object : BroadcastReceiver() {
@@ -79,41 +79,31 @@ class BluetoothRepositoryImpl @Inject constructor(private val context: Context,
 
             when (action) {
                 BluetoothAdapter.ACTION_STATE_CHANGED -> {
-                    Log.d("[ACTION]", "STATE CHANGED")
+                    Log.d("[CHANGED]", "STATE CHANGED")
                 }
 
                 BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {
-                    Log.d("[ACTION]", "DISCOVERY STARTED")
+                    Log.d("[STARTED]", "DISCOVERY STARTED")
                     tempDeviceList.clear()
                 }
 
                 BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
-                    Log.d("[ACTION]", "DISCOVERY FINISHED")
-                    Log.d("[RESULT]", "DISCOVERY RESULT")
+                    Log.d("[FINISHED]", "DISCOVERY FINISHED")
                     _discoveredDeviceList.value = tempDeviceList
-                    _discoveredDeviceList.value.forEach { device ->
-                        Log.d("[DiscoveredDevice]", "Name: ${device.name}, Address: ${device.address}")
-                    }
                 }
 
                 BluetoothDevice.ACTION_FOUND -> {
                     val device = intent?.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
-                    device?.let{
+                    device?.let {
                         // 로그 찍기 용
-                        if(it.name != null ){
-                            Log.d("[ACTION]", "Name: ${device.name}, Address: ${device.address}")
+                        if (it.name != null) {
+                            Log.d("[FOUND]", "Name: ${device.name}, Address: ${device.address}")
                         }
 
                         // 중복 방지
-                        if(it.name != null && !tempDeviceList.contains(it)){
+                        if (it.name != null && !tempDeviceList.contains(it)) {
                             tempDeviceList.add(it)
                         }
-//                        if(it.name != null && !_discoveredDeviceList.value.contains(it)){
-//                            val newList = _discoveredDeviceList.value.toMutableList().apply {
-//                                this.add(it)
-//                            }
-//                            _discoveredDeviceList.value = newList
-//                        }
                     }
                 }
             }

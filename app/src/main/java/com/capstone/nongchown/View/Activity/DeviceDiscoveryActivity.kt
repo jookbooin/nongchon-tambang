@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -34,7 +35,7 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        binding = ActivityDeviceDiscoveryBinding .inflate(layoutInflater)
+        binding = ActivityDeviceDiscoveryBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
@@ -44,14 +45,20 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
         }
 
         setupRecyclerView()
+        startDiscovery()
+        showDiscoveredBluetoothDevice()
 
-        discoveryBluetoothDevice()
-        bluetoothViewModel.startBluetoothDiscovery()
 
         binding.btncanceldiscovery.setOnClickListener() {
             Log.d("[btnCancelDiscovery]", "SCAN CANCEL")
             bluetoothViewModel.cancelBluetoothDiscovery()
             finish()
+        }
+
+        bluetoothAdapter.itemClick = object : BluetoothAdapter.ItemClick {
+            override fun onClick(view: View, position: Int) {
+                bluetoothViewModel.connectToDevice()
+            }
         }
     }
 
@@ -59,7 +66,6 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
         super.onDestroy()
         Log.d("[onDestroy]", "STOP BLUETOOTH DISCOVERY") // UNREGISTER RECEIVER
         bluetoothViewModel.stopBluetoothDiscovery()
-//        unregisterReceiver(scanDeviceReceiver)
     }
 
     private fun setupRecyclerView() {
@@ -70,17 +76,27 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
         }
     }
 
-    @SuppressLint("MissingPermission")
-    private fun discoveryBluetoothDevice() {
-        Log.d("[discoveryBluetoothDevice]", "DISCOVERY BLUETOOTH DEVICES ") // UNREGISTER RECEIVER
+    private fun loading() {
+        Log.d("[loading]", "LOADING")
+        binding.textView5.text = "기기를 찾고 있습니다."
+        bluetoothViewModel.loadingDiscovery()
+    }
+
+    private fun startDiscovery() {
         loading()
+        bluetoothViewModel.startBluetoothDiscovery()
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun showDiscoveredBluetoothDevice() {
+        // UNREGISTER RECEIVER
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 bluetoothViewModel.bluetoothDiscoveryState.collect { state ->
 
                     when (state) {
-                        is DiscoveryState.Success -> success(state.devices)
                         is DiscoveryState.Loading -> loading()
+                        is DiscoveryState.Success -> success(state.devices)
                         is DiscoveryState.Error -> Log.d("state error", "STATE ERROR")
 
                     }
@@ -95,20 +111,12 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
         Log.d("[showDevices]", "UPDATE LIST")
         // 디바이스 리스트를 화면에 표시하는 로직 구현
         devices?.forEach { device ->
-            Log.d("[showDevices]", "Name: ${device.name}, Address: ${device.address}")
+            Log.d("[RESULT]", "Name: ${device.name}, Address: ${device.address}")
         }
 
         bluetoothAdapter.deviceList = devices
-        bluetoothAdapter.notifyDataSetChanged() //
-//        binding.textView5.text = "기기 선택"
-
+        bluetoothAdapter.notifyDataSetChanged()
     }
 
-    private fun loading() {
-        Log.d("[loading]", "LOADING DISCOVERY")
-        binding.textView5.text = "기기를 찾고 있습니다."
-        bluetoothViewModel.loadingDiscovery()
-
-    }
 
 }

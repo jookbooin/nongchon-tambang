@@ -7,6 +7,8 @@ interface BluetoothRepository {
 
     fun startDiscovery(): StateFlow<List<BluetoothDevice>>
     fun getPairedDevice(): StateFlow<List<BluetoothDevice>>
+    fun connectToDevice()
     fun stopDiscovery()
     fun cancelDiscovery()
+
 }
