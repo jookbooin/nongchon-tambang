@@ -18,15 +18,18 @@ class BluetoothViewModel @Inject constructor(private val bluetoothRepository: Bl
     private val _bluetoothDiscoveryState = MutableStateFlow<DiscoveryState>(DiscoveryState.Loading) // 내부 상태를 변경할 수 있는 StateFlow
     val bluetoothDiscoveryState: StateFlow<DiscoveryState> = _bluetoothDiscoveryState.asStateFlow() // // 외부에 노출된 관찰 전용 -> 독하고 있는 컴포넌트에 변경 사항을 전파
 
-
-    fun startBluetoothDiscovery() {
+    fun loadingDiscovery(){
         _bluetoothDiscoveryState.value = DiscoveryState.Loading
+    }
+    fun startBluetoothDiscovery() {
         viewModelScope.launch {//ViewModel 내에서 비동기 작업을 쉽게 수행
             bluetoothRepository.startDiscovery().collect(){
                 _bluetoothDiscoveryState.value = DiscoveryState.Success(it)
             }
         }
     }
+
+
 
     fun stopBluetoothDiscovery(){
             bluetoothRepository.stopDiscovery()

@@ -84,6 +84,7 @@ class BluetoothRepositoryImpl @Inject constructor(private val context: Context,
 
                 BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {
                     Log.d("[ACTION]", "DISCOVERY STARTED")
+                    tempDeviceList.clear()
                 }
 
                 BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
