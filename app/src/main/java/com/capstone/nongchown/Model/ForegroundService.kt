@@ -106,6 +106,7 @@ class ForegroundService : Service() {
                             Manifest.permission.POST_NOTIFICATIONS
                         ) != PackageManager.PERMISSION_GRANTED
                     ) {
+
                         // TODO: Consider calling
                         //    ActivityCompat#requestPermissions
                         // here to request the missing permissions, and then overriding
@@ -113,8 +114,9 @@ class ForegroundService : Service() {
                         //                                          int[] grantResults)
                         // to handle the case where the user grants the permission. See the documentation
                         // for ActivityCompat#requestPermissions for more details.
-                        return
+                       // return
                     }
+
                     NotificationManagerCompat.from(nowContext).notify(1, updatedNotification)
 
 
