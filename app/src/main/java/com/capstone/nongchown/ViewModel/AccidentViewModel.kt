@@ -17,10 +17,5 @@ class AccidentViewModel() :ViewModel() {
         //_accidentCount.value=count
     }
 
-    fun userSafe(){
-        // 유저가 안전할때 전달할 데이터
-        //foreground.userSafe()
-    }
-
 
 }

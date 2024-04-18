@@ -15,7 +15,7 @@ import com.capstone.nongchown.Model.ForegroundService
 import com.capstone.nongchown.R
 import moveActivity
 
-class MainActivity : AppCompatActivity() {
+class MainActivity() : AppCompatActivity() {
     private lateinit var sharedPreferences: SharedPreferences
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,26 +33,29 @@ class MainActivity : AppCompatActivity() {
             moveActivity(BluetoothActivity::class.java)
         }
 
-        sharedPreferences = getSharedPreferences("isFirst", Context.MODE_PRIVATE)
-        val isFirstRun = sharedPreferences.getBoolean("isFirstRun", true)
 
-        if (isFirstRun) {
 
-            val serviceIntent = Intent(this@MainActivity, ForegroundService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(serviceIntent)
-            } else {
-                startService(serviceIntent)
-            }
-            with(sharedPreferences.edit()) {
-                putBoolean("isFirstRun", false)
-                apply()
-            }
-        }
-
+       sharedPreferences = getSharedPreferences("isFirst", Context.MODE_PRIVATE)
+       val isFirstRun = sharedPreferences.getBoolean("isFirstRun", true)
 
         val btnAccident: Button = findViewById(R.id.btnAccident)
         btnAccident.setOnClickListener{
+
+            if (isFirstRun) {
+
+                val serviceIntent = Intent(this@MainActivity, ForegroundService::class.java)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    startForegroundService(serviceIntent)
+                } else {
+                    startService(serviceIntent)
+                }
+                with(sharedPreferences.edit()) {
+                    putBoolean("isFirstRun", false)
+                    apply()
+                }
+            }
+
+
             var accidentIntent = Intent(this@MainActivity, AccidentActivity::class.java)
             startActivity(accidentIntent)
 
