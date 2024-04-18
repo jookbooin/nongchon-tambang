@@ -10,9 +10,11 @@ import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.ComponentActivity
+
 import androidx.activity.viewModels
 import androidx.lifecycle.Observer
 import com.capstone.nongchown.Model.ForegroundService
+
 import com.capstone.nongchown.R
 import com.capstone.nongchown.ViewModel.AccidentViewModel
 
