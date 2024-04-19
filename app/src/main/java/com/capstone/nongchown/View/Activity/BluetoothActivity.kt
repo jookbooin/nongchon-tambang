@@ -20,11 +20,14 @@ import androidx.core.view.WindowInsetsCompat
 import com.capstone.nongchown.Constants
 import com.capstone.nongchown.Model.Enum.BluetoothState
 import com.capstone.nongchown.R
+import com.capstone.nongchown.Utils.moveActivity
+import com.capstone.nongchown.Utils.showToast
 import com.capstone.nongchown.View.Activity.BaseActivity.BluetoothBaseActivity
 import com.capstone.nongchown.ViewModel.BluetoothViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import moveActivity
 import showToast
+
 
 
 @AndroidEntryPoint
@@ -35,7 +38,9 @@ class BluetoothActivity : BluetoothBaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
         setContentView(R.layout.activity_bluethooth)
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
