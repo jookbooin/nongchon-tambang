@@ -25,8 +25,7 @@ import com.capstone.nongchown.Utils.showToast
 import com.capstone.nongchown.View.Activity.BaseActivity.BluetoothBaseActivity
 import com.capstone.nongchown.ViewModel.BluetoothViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import moveActivity
-import showToast
+
 
 
 
