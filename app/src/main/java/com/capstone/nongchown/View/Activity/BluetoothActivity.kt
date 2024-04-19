@@ -20,10 +20,10 @@ import androidx.core.view.WindowInsetsCompat
 import com.capstone.nongchown.Constants
 import com.capstone.nongchown.Model.Enum.BluetoothState
 import com.capstone.nongchown.R
+import com.capstone.nongchown.Utils.moveActivity
+import com.capstone.nongchown.Utils.showToast
 import com.capstone.nongchown.View.Activity.BaseActivity.BluetoothBaseActivity
 import com.capstone.nongchown.ViewModel.BluetoothViewModel
-import moveActivity
-import showToast
 
 class BluetoothActivity : BluetoothBaseActivity() {
 
@@ -33,6 +33,9 @@ class BluetoothActivity : BluetoothBaseActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_bluethooth_main)
+//        R.id.main 은 현재 activity_bluetooth_main.xml 의 main 을 참조하고 있음.
+//        그래서 해당 main 내부의 btndeviceadd 를 찾아서 사용 중임.
+//        해당 파일의 id 를 main 이 아닌 다른 이름으로 변경해야 한다.
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)

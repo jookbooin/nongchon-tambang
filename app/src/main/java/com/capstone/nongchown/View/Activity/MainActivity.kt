@@ -18,7 +18,8 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.capstone.nongchown.Model.ForegroundService
 import com.capstone.nongchown.R
-import moveActivity
+
+import com.capstone.nongchown.Utils.moveActivity
 
 class MainActivity() : AppCompatActivity() {
     private lateinit var sharedPreferences: SharedPreferences
@@ -31,10 +32,14 @@ class MainActivity() : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-
+        val btnUserProfile: Button = findViewById(R.id.btnuser_profile)
+        btnUserProfile.setOnClickListener {
+            Log.v("setOnClick-MainActivity", "btn")
+            moveActivity(UserProfileActivity::class.java)
+        }
         val btnBluetooth: Button = findViewById(R.id.btnbluetooth)
         btnBluetooth.setOnClickListener {
-            Log.v("setOnClick-MainActivity","btn")
+            Log.v("setOnClick-MainActivity", "btn")
             moveActivity(BluetoothActivity::class.java)
 
         }
@@ -79,5 +84,4 @@ class MainActivity() : AppCompatActivity() {
 
         }
     }
-    // 04-01 commit test ( branch )
 }
