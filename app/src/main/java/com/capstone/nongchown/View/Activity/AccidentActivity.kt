@@ -83,8 +83,11 @@ class AccidentActivity : ComponentActivity() {
 
         findViewById<Button>(R.id.ok_btn).setOnClickListener {
             Log.d("test", "btnON")
-            accidentViewModel.userSafe()
-            //foregroundService?.userSafe()
+            //accidentViewModel.userSafe()
+            foregroundService?.userSafe()
+            
+            val mainIntent = Intent(this, MainActivity::class.java)
+            startActivity(mainIntent)
 
         }
     }

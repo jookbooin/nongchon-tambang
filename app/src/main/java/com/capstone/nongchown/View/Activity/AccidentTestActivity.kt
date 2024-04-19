@@ -45,8 +45,7 @@ class AccidentTestActivity : ComponentActivity() {
         }
 
         findViewById<Button>(R.id.button).setOnClickListener {
-            var accidentIntent = Intent(this@AccidentTestActivity, AccidentActivity::class.java)
-            startActivity(accidentIntent)
+
         }
     }
 
