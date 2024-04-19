@@ -23,6 +23,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
+        android:name=".NongchownApplication"
         android:theme="@style/Theme.Nongchown"
         tools:targetApi="31">
         <service
@@ -41,7 +42,7 @@
             android:exported="false" />
 
         <activity
-            android:name=".View.Activity.DeviceScanActivity"
+            android:name=".View.Activity.DeviceDiscoveryActivity"
             android:exported="false" />
 
 
