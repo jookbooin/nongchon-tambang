@@ -23,6 +23,12 @@ class BluetoothRepositoryImpl @Inject constructor(
 
     @SuppressLint("MissingPermission")
     override fun startDiscovery(): MutableStateFlow<List<BluetoothDevice>> {
+
+        if(_discoveredDeviceList.value.isNotEmpty()) {
+            Log.d("로그", "INIT LIST")
+            _discoveredDeviceList.value = emptyList()
+        }
+
         val filter = IntentFilter()
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED) //블루투스 상태변화 액션
         filter.addAction(BluetoothDevice.ACTION_FOUND) //기기 검색됨
@@ -50,19 +56,20 @@ class BluetoothRepositoryImpl @Inject constructor(
         return _pairedDeviceList
     }
 
-    override fun connectToDevice() {
-        Log.d("[connectToDevice]", "CONNECT TO DEVICE")
+    @SuppressLint("MissingPermission")
+    override fun connectToDevice(bluetoothDevice: BluetoothDevice) {
+        Log.d("[로그]", "CONNECT TO DEVICE ( ${bluetoothDevice.name} : ${bluetoothDevice.address}")
     }
 
     override fun stopDiscovery() {
-        Log.d("[stopDiscovery]", "DISCOVERY STOP")
-        Log.d("[unregisterReceiver]", "UNREGISTER RECEIVER")
+        Log.d("[로그]", "DISCOVERY STOP")
+        Log.d("[로그]", "UNREGISTER RECEIVER")
         context.unregisterReceiver(deviceScanReceiver)
     }
 
     @SuppressLint("MissingPermission")
     override fun cancelDiscovery() {
-        Log.d("[cancelDiscovery]", "DISCOVERY CANCEL")
+        Log.d("[로그]", "DISCOVERY CANCEL")
         bluetoothAdapter?.cancelDiscovery()
     }
 
@@ -79,16 +86,16 @@ class BluetoothRepositoryImpl @Inject constructor(
 
             when (action) {
                 BluetoothAdapter.ACTION_STATE_CHANGED -> {
-                    Log.d("[CHANGED]", "STATE CHANGED")
+                    Log.d("[로그]", "STATE CHANGED")
                 }
 
                 BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {
-                    Log.d("[STARTED]", "DISCOVERY STARTED")
+                    Log.d("[로그]", "DISCOVERY STARTED")
                     tempDeviceList.clear()
                 }
 
                 BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
-                    Log.d("[FINISHED]", "DISCOVERY FINISHED")
+                    Log.d("[로그]", "DISCOVERY FINISHED")
                     _discoveredDeviceList.value = tempDeviceList
                 }
 
@@ -97,7 +104,7 @@ class BluetoothRepositoryImpl @Inject constructor(
                     device?.let {
                         // 로그 찍기 용
                         if (it.name != null) {
-                            Log.d("[FOUND]", "Name: ${device.name}, Address: ${device.address}")
+                            Log.d("[로그]", "Name: ${device.name}, Address: ${device.address}")
                         }
 
                         // 중복 방지

@@ -38,15 +38,18 @@ class BluetoothAdapter(var deviceList: List<BluetoothDevice>) : RecyclerView.Ada
          * 클릭 이벤트가 발생할 때 itemClick 콜백을 통해 외부로 이벤트를 전달
          * */
         holder.itemView.setOnClickListener {
-            Log.d("[itemClick]"," position : $position name : ${deviceList[position].name} ")
+            Log.d("[로그]"," position : $position name : ${deviceList[position].name} ")
             itemClick?.onClick(it, position)
         }
-        holder.name.text = deviceList[position].name;
-        holder.address.text = deviceList[position].address;
+        holder.name.text = deviceList[position].name?: "알 수 없는 기기"
+        holder.address.text = deviceList[position].address
     }
 
+    fun getDeviceAtPosition(position: Int): BluetoothDevice {
+        return deviceList[position]
+    }
 
-    inner class Holder(val binding: DiscoveryDeviceListBinding) : RecyclerView.ViewHolder(binding.root) {
+    inner class Holder(binding: DiscoveryDeviceListBinding) : RecyclerView.ViewHolder(binding.root) {
         val name = binding.name
         val address = binding.address
     }

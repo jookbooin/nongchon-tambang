@@ -50,21 +50,22 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
 
 
         binding.btncanceldiscovery.setOnClickListener() {
-            Log.d("[btnCancelDiscovery]", "SCAN CANCEL")
+            Log.d("[로그]", "SCAN CANCEL")
             bluetoothViewModel.cancelBluetoothDiscovery()
             finish()
         }
 
         bluetoothAdapter.itemClick = object : BluetoothAdapter.ItemClick {
             override fun onClick(view: View, position: Int) {
-                bluetoothViewModel.connectToDevice()
+                val device = bluetoothAdapter.getDeviceAtPosition(position)
+                bluetoothViewModel.connectToDevice(device)
             }
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.d("[onDestroy]", "STOP BLUETOOTH DISCOVERY") // UNREGISTER RECEIVER
+        Log.d("[로그]", "STOP BLUETOOTH DISCOVERY") // UNREGISTER RECEIVER
         bluetoothViewModel.stopBluetoothDiscovery()
     }
 
@@ -77,7 +78,7 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
     }
 
     private fun loading() {
-        Log.d("[loading]", "LOADING")
+        Log.d("[로그]", "LOADING")
         binding.textView5.text = "기기를 찾고 있습니다."
         bluetoothViewModel.loadingDiscovery()
     }
@@ -108,10 +109,10 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
 
     @SuppressLint("MissingPermission", "NotifyDataSetChanged")
     private fun success(devices: List<BluetoothDevice>) {
-        Log.d("[showDevices]", "UPDATE LIST")
+        Log.d("[로그]", "UPDATE LIST")
         // 디바이스 리스트를 화면에 표시하는 로직 구현
         devices?.forEach { device ->
-            Log.d("[RESULT]", "Name: ${device.name}, Address: ${device.address}")
+            Log.d("[로그]", "Name: ${device.name}, Address: ${device.address}")
         }
 
         bluetoothAdapter.deviceList = devices
