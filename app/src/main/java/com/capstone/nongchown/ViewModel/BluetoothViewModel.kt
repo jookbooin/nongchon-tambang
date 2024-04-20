@@ -39,8 +39,10 @@ class BluetoothViewModel @Inject constructor(private val bluetoothRepository: Bl
         bluetoothRepository.cancelDiscovery()
     }
 
-    fun connectToDevice(bluetoothDevice : BluetoothDevice) {
-        bluetoothRepository.connectToDevice(bluetoothDevice)
+     fun connectToDevice(bluetoothDevice : BluetoothDevice) {
+        viewModelScope.launch {
+            bluetoothRepository.connectToDevice(bluetoothDevice)
+        }
 
     }
 

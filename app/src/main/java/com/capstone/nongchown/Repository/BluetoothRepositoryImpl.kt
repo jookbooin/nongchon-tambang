@@ -3,14 +3,21 @@ package com.capstone.nongchown.Repository
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothSocket
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.util.Log
+import com.capstone.nongchown.Constants
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.withContext
+import java.util.UUID
 import javax.inject.Inject
+import kotlin.coroutines.coroutineContext
 
 class BluetoothRepositoryImpl @Inject constructor(
     private val context: Context,
@@ -21,19 +28,26 @@ class BluetoothRepositoryImpl @Inject constructor(
     private val _discoveredDeviceList = MutableStateFlow<List<BluetoothDevice>>(emptyList())
     private val _pairedDeviceList = MutableStateFlow<List<BluetoothDevice>>(emptyList())
 
+    private var bluetoothSocket: BluetoothSocket? = null
+    private var connectedJob: Job? = null
+
+
     @SuppressLint("MissingPermission")
     override fun startDiscovery(): MutableStateFlow<List<BluetoothDevice>> {
-
         if(_discoveredDeviceList.value.isNotEmpty()) {
-            Log.d("로그", "INIT LIST")
+            Log.d("[로그]", "INIT LIST")
             _discoveredDeviceList.value = emptyList()
         }
 
         val filter = IntentFilter()
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED) //블루투스 상태변화 액션
-        filter.addAction(BluetoothDevice.ACTION_FOUND) //기기 검색됨
         filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED) //기기 검색 시작
         filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED) //기기 검색 종료
+        filter.addAction(BluetoothDevice.ACTION_FOUND) //기기 검색됨
+        filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED) //a low level (ACL) connection 연결 확인
+        filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED) //  원격 블루투스 장치의 페어링 상태가 변경 (페어링?)
+        filter.addAction(BluetoothDevice.ACTION_PAIRING_REQUEST)  // 페어링 요청
+        filter.addAction(BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED)
         context.registerReceiver(deviceScanReceiver, filter)
         bluetoothAdapter?.startDiscovery()
         return _discoveredDeviceList
@@ -41,6 +55,7 @@ class BluetoothRepositoryImpl @Inject constructor(
 
     @SuppressLint("MissingPermission")
     override fun getPairedDevice(): StateFlow<List<BluetoothDevice>> {
+        Log.d("[로그]", "GET PAIRED DEVICES")
 
         if (bluetoothAdapter != null) {
             // Ensure Bluetooth is enabled
@@ -57,14 +72,48 @@ class BluetoothRepositoryImpl @Inject constructor(
     }
 
     @SuppressLint("MissingPermission")
-    override fun connectToDevice(bluetoothDevice: BluetoothDevice) {
+    suspend override fun connectToDevice(bluetoothDevice: BluetoothDevice) {
+        Log.d("[로그]", "[ ${Thread.currentThread().name} ]")
         Log.d("[로그]", "CONNECT TO DEVICE ( ${bluetoothDevice.name} : ${bluetoothDevice.address}")
+
+        try {
+            /**  BluetoothDevice 객체가 아직 페어링되지 않았을 때 */
+            if (bluetoothDevice.bondState != BluetoothDevice.BOND_BONDED) {
+
+                bluetoothDevice.createBond() /** 페어링 과정 완료 후 ACTION_BOND_STATE_CHANGED 반환 */
+            }
+
+            /**
+             * 실행환경 변화 : Dispatcher.IO 환경에서 코루틴을 실행  ( 네트워크 작업 )
+             * 순차적 실행 표현 가능
+             * */
+            withContext(Dispatchers.IO) {
+                Log.d("[로그]", "[ ${Thread.currentThread().name} ] - [ $coroutineContext ]")
+                bluetoothSocket?.close()
+                bluetoothSocket = createBluetoothSocket(bluetoothDevice)
+                bluetoothSocket?.connect()
+            }
+            Log.d("[로그]", "[ ${Thread.currentThread().name} ] - [ $coroutineContext ]")
+            connectedJob?.cancel()
+        } catch (e: Exception) {
+            Log.d("[로그]", "${e.message}")
+
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun createBluetoothSocket(device: BluetoothDevice): BluetoothSocket {
+        val uuid = UUID.fromString(Constants.SPP_UUID) // SPP UUID
+
+        Log.d("[로그]", "CREATE BLUETOOTH SOCKET")
+        return device.createRfcommSocketToServiceRecord(uuid)
     }
 
     override fun stopDiscovery() {
         Log.d("[로그]", "DISCOVERY STOP")
-        Log.d("[로그]", "UNREGISTER RECEIVER")
+
         context.unregisterReceiver(deviceScanReceiver)
+        Log.d("[로그]", "UNREGISTER RECEIVER")
     }
 
     @SuppressLint("MissingPermission")
@@ -86,7 +135,7 @@ class BluetoothRepositoryImpl @Inject constructor(
 
             when (action) {
                 BluetoothAdapter.ACTION_STATE_CHANGED -> {
-                    Log.d("[로그]", "STATE CHANGED")
+                    Log.d("[로그]", "ACTION STATE CHANGED")
                 }
 
                 BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {
@@ -104,7 +153,7 @@ class BluetoothRepositoryImpl @Inject constructor(
                     device?.let {
                         // 로그 찍기 용
                         if (it.name != null) {
-                            Log.d("[로그]", "Name: ${device.name}, Address: ${device.address}")
+                            Log.d("[로그]", "FOUND ( Name: ${device.name}, Address: ${device.address} )")
                         }
 
                         // 중복 방지
@@ -113,6 +162,23 @@ class BluetoothRepositoryImpl @Inject constructor(
                         }
                     }
                 }
+
+                BluetoothDevice.ACTION_ACL_CONNECTED->{
+                    Log.d("[로그]", "ACTION ACL CONNECTED")
+                }
+
+                BluetoothDevice.ACTION_BOND_STATE_CHANGED->{
+                    Log.d("[로그]", "ACTION BOND STATE CHANGED")
+                }
+
+                BluetoothDevice.ACTION_PAIRING_REQUEST->{
+                    Log.d("[로그]", "ACTION PAIRING REQUEST")
+                }
+
+                BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED->{
+                    Log.d("[로그]", "ACTION CONNECTION STATE CHANGED")
+                }
+
             }
 
         }
