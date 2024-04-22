@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "233803218522",
+    "project_id": "nongchown",
+    "storage_bucket": "nongchown.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:233803218522:android:1a309d053d2441eadde263",
+        "android_client_info": {
+          "package_name": "com.capstone.nongchown"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAXLWJ4E7bLm9QDs55svfF8c2sQtpgxnIw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
