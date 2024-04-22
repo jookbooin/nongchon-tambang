@@ -44,7 +44,13 @@ class MainActivity() : AppCompatActivity() {
 
         }
 
+        val btnFirebase: Button = findViewById(R.id.btnFirebase)
+        btnFirebase.setOnClickListener {
+            Log.v("test", "firebaseStart")
+            var firebaseIntent = Intent(this@MainActivity, FireBaseTestActivity::class.java)
+            startActivity(firebaseIntent)
 
+        }
 
        sharedPreferences = getSharedPreferences("isFirst", Context.MODE_PRIVATE)
        val isFirstRun = sharedPreferences.getBoolean("isFirstRun", true)
@@ -83,5 +89,7 @@ class MainActivity() : AppCompatActivity() {
             startActivity(accidentIntent)
 
         }
+
+
     }
 }

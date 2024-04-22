@@ -28,4 +28,10 @@
         android:layout_height="wrap_content"
         android:text="Accident" />
 
+    <Button
+        android:id="@+id/btnFirebase"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="FirebaseTest" />
+
 </LinearLayout>
