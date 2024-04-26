@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".View.Activity.DeviceScanActivity">
+    tools:context=".View.Activity.DeviceDiscoveryActivity">
 
     <TextView
         android:id="@+id/textView5"
@@ -18,8 +18,10 @@
         app:layout_constraintTop_toTopOf="parent"
         android:layout_marginTop="80dp"/>
 
+
+
     <Button
-        android:id="@+id/btncancelscan"
+        android:id="@+id/btncanceldiscovery"
         android:layout_height="wrap_content"
         android:layout_width="match_parent"
         android:text="취 소"
@@ -29,4 +31,17 @@
         android:layout_marginBottom="20dp"
         android:layout_marginLeft="40dp"
         android:layout_marginRight="40dp"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/devicerv"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/textView5"
+        app:layout_constraintBottom_toTopOf="@id/btncanceldiscovery"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="40dp"
+        android:layout_marginBottom="20dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp" />
 </androidx.constraintlayout.widget.ConstraintLayout>

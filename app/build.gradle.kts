@@ -2,6 +2,8 @@ plugins {
     id("com.google.gms.google-services")
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
+    kotlin("kapt")
+    id("com.google.dagger.hilt.android")
 }
 
 android {
@@ -33,8 +35,10 @@ android {
     }
     kotlinOptions {
         jvmTarget = "1.8"
+    }
 
-
+    buildFeatures {
+        viewBinding = true
     }
 }
 
@@ -47,7 +51,6 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.circleimageview)
     implementation(libs.androidx.fragment.ktx)
-    implementation(libs.firebase.firestore.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -61,4 +64,8 @@ dependencies {
     // Add the dependencies for any other desired Firebase products
     // https://firebase.google.com/docs/android/setup#available-libraries
 
+}
+
+kapt {
+    correctErrorTypes = true
 }

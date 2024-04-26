@@ -24,7 +24,12 @@ import com.capstone.nongchown.Utils.moveActivity
 import com.capstone.nongchown.Utils.showToast
 import com.capstone.nongchown.View.Activity.BaseActivity.BluetoothBaseActivity
 import com.capstone.nongchown.ViewModel.BluetoothViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
+
+
+
+@AndroidEntryPoint
 class BluetoothActivity : BluetoothBaseActivity() {
 
     val bluetoothViewModel by viewModels<BluetoothViewModel>()   // Fragment KTX 적용
@@ -32,10 +37,9 @@ class BluetoothActivity : BluetoothBaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContentView(R.layout.activity_bluethooth_main)
-//        R.id.main 은 현재 activity_bluetooth_main.xml 의 main 을 참조하고 있음.
-//        그래서 해당 main 내부의 btndeviceadd 를 찾아서 사용 중임.
-//        해당 파일의 id 를 main 이 아닌 다른 이름으로 변경해야 한다.
+
+        setContentView(R.layout.activity_bluethooth)
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
@@ -59,7 +63,7 @@ class BluetoothActivity : BluetoothBaseActivity() {
              * 2. 블루투스 활성화 check
              * */
             when (checkBluetoothState()) {
-                BluetoothState.ENABLED -> moveActivity(DeviceScanActivity::class.java)
+                BluetoothState.ENABLED -> moveActivity(DeviceDiscoveryActivity::class.java)
                 BluetoothState.DISABLED -> {
                     val bluetoothIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
                     startForResult.launch(bluetoothIntent)
@@ -68,7 +72,6 @@ class BluetoothActivity : BluetoothBaseActivity() {
                 else -> showToast("블루투스를 지원하지 않는 장비입니다.")
             }
         }
-
     }
 
     /** 권한 관련 코드들 모을 수 있을 듯? */
@@ -95,20 +98,20 @@ class BluetoothActivity : BluetoothBaseActivity() {
     /** 블루투스 권한 처리*/
     private fun requestBluetoothPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            Log.d("BluetoothPermissions", "Build.VERSION.SDK_INT >= Build.VERSION_CODES.S")
+            Log.d("[로그]", "Build.VERSION.SDK_INT >= Build.VERSION_CODES.S")
             if (!hasPermissions(this, Constants.PERMISSIONS_S)) {
-                Log.d("hasPermissions", "PERMISSIONS_S x")
+                Log.d("[로그]", "PERMISSIONS_S x")
                 requestPermissions(Constants.PERMISSIONS_S, Constants.PERMISSION_REQUEST_CODE_S)
             } else {
-                Log.d("hasPermissions", "모든 권한이 허용되어 있다.")
+                Log.d("[로그]", "모든 권한이 허용되어 있다.")
             }
         } else {
-            Log.d("BluetoothPermissions", "else")
+            Log.d("[로그]", "Build.VERSION.SDK_INT < Build.VERSION_CODES.S")
             if (!hasPermissions(this, Constants.PERMISSIONS)) {
-                Log.d("hasPermissions", "PERMISSIONS x -> requestPermissions")
+                Log.d("[로그]", "PERMISSIONS x -> requestPermissions")
                 requestPermissions(Constants.PERMISSIONS, Constants.PERMISSION_REQUEST_CODE)
             } else {
-                Log.d("hasPermissions", "모든 권한이 허용되어 있다.")
+                Log.d("[로그]", "모든 권한이 허용되어 있다.")
             }
         }
     }
@@ -121,28 +124,28 @@ class BluetoothActivity : BluetoothBaseActivity() {
         when (requestCode) {
 
             Constants.PERMISSION_REQUEST_CODE_S -> {
-                Log.d("PermissionResult", "requestCode : $requestCode")
+                Log.d("[로그]", "requestCode : $requestCode")
 
                 if (grantResults.isNotEmpty() && isPermissionGranted(grantResults)) {
-                    Log.d("RequestPermission", "모든 권한을 허용하였습니다.")
+                    Log.d("[로그]", "모든 권한을 허용하였습니다.")
                     showToast("모든 권한을 허용하였습니다.")
                 } else {
                     // 위치 권한
                     if (grantResults[2] == PackageManager.PERMISSION_GRANTED) {
-                        Log.d("PermissionResult", "위치 권한을 허용하였습니다.")
+                        Log.d("[로그]", "위치 권한을 허용하였습니다.")
                     } else if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {  // 위치 권한 2번 확인
-                        Log.d("PermissionResult", "위치 권한을 거절하였습니다.")
+                        Log.d("[로그]", "위치 권한을 거절하였습니다.")
                     } else {
-                        Log.d("PermissionResult", "위치 권한을 다시 묻지 않음으로 하였습니다.")
+                        Log.d("[로그]", "위치 권한을 다시 묻지 않음으로 하였습니다.")
                     }
 
                     // 블루투스 권한
                     if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                        Log.d("PermissionResult", "블루투스 권한을 허용하였습니다.")
+                        Log.d("[로그]", "블루투스 권한을 허용하였습니다.")
                     } else if (shouldShowRequestPermissionRationale(Manifest.permission.BLUETOOTH_SCAN)) {  // 블루투스 권한 2번 확인
-                        Log.d("PermissionResult", "블루투스 권한을 거절하였습니다.")
+                        Log.d("[로그]", "블루투스 권한을 거절하였습니다.")
                     } else {
-                        Log.d("PermissionResult", "블루투스 권한을 다시 묻지 않음으로 하였습니다.")
+                        Log.d("[로그]", "블루투스 권한을 다시 묻지 않음으로 하였습니다.")
                     }
 
                 }
@@ -162,28 +165,28 @@ class BluetoothActivity : BluetoothBaseActivity() {
         }
 
         if (!isBluetoothEnabled()) {  //  비활성화 상태
-            Log.d("BluetoothEnabled", "기기의 블루투스 비활성화 상태")
+            Log.d("[로그]", "기기의 블루투스 비활성화 상태")
             return BluetoothState.DISABLED // DISABLED
         }
 
-        Log.d("BluetoothEnabled", "기기의 블루투스 활성화 상태")
+        Log.d("[로그]", "기기의 블루투스 활성화 상태")
         return BluetoothState.ENABLED      // ENABLED
     }
 
     val startForResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
         if (result.resultCode == RESULT_OK) {
-            Log.d("Bluetooth", "블루투스 활성화")
+            Log.d("[로그]", "블루투스 활성화")
         } else if (result.resultCode == RESULT_CANCELED) {
-            Log.d("Bluetooth", "사용자 블루투스 활성화 거부")
+            Log.d("[로그]", "사용자 블루투스 활성화 거부")
         }
     }
 
     fun isBluetoothSupport(): Boolean {
         return if (bluetoothAdapter == null) {
-            Log.d("BluetoothSupport", "기기가 블루투스 지원하지 않습니다.")
+            Log.d("[로그]", "기기가 블루투스 지원하지 않습니다.")
             false
         } else {
-            Log.d("BluetoothSupport", "기기가 블루투스를 지원합니다.")
+            Log.d("[로그]", "기기가 블루투스를 지원합니다.")
             true
         }
     }
