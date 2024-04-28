@@ -14,6 +14,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -22,17 +23,14 @@ import com.capstone.nongchown.Model.Enum.BluetoothState
 import com.capstone.nongchown.R
 import com.capstone.nongchown.Utils.moveActivity
 import com.capstone.nongchown.Utils.showToast
-import com.capstone.nongchown.View.Activity.BaseActivity.BluetoothBaseActivity
 import com.capstone.nongchown.ViewModel.BluetoothViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 
-
-
 @AndroidEntryPoint
-class BluetoothActivity : BluetoothBaseActivity() {
+class BluetoothActivity : AppCompatActivity(){
 
-    val bluetoothViewModel by viewModels<BluetoothViewModel>()   // Fragment KTX 적용
+    val bluetoothViewModel by viewModels<BluetoothViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,6 +70,10 @@ class BluetoothActivity : BluetoothBaseActivity() {
                 else -> showToast("블루투스를 지원하지 않는 장비입니다.")
             }
         }
+
+
+
+
     }
 
     /** 권한 관련 코드들 모을 수 있을 듯? */
@@ -159,12 +161,12 @@ class BluetoothActivity : BluetoothBaseActivity() {
 
     fun checkBluetoothState(): BluetoothState {
 
-        if (!isBluetoothSupport()) {
+        if (!bluetoothViewModel.isBluetoothSupport()) {
             finish()
             return BluetoothState.NOT_SUPPORT // NOT_SUPPORT
         }
 
-        if (!isBluetoothEnabled()) {  //  비활성화 상태
+        if (!bluetoothViewModel.isBluetoothEnabled()) {  //  비활성화 상태
             Log.d("[로그]", "기기의 블루투스 비활성화 상태")
             return BluetoothState.DISABLED // DISABLED
         }
@@ -181,23 +183,23 @@ class BluetoothActivity : BluetoothBaseActivity() {
         }
     }
 
-    fun isBluetoothSupport(): Boolean {
-        return if (bluetoothAdapter == null) {
-            Log.d("[로그]", "기기가 블루투스 지원하지 않습니다.")
-            false
-        } else {
-            Log.d("[로그]", "기기가 블루투스를 지원합니다.")
-            true
-        }
-    }
-
-    fun isBluetoothEnabled(): Boolean {
-        return if (bluetoothAdapter?.isEnabled == false) {   // 기기의 블루투스 비활성화 상태
-            false
-        } else {
-            true
-        }
-    }
+//    fun isBluetoothSupport(): Boolean {
+//        return if (bluetoothAdapter == null) {
+//            Log.d("[로그]", "기기가 블루투스 지원하지 않습니다.")
+//            false
+//        } else {
+//            Log.d("[로그]", "기기가 블루투스를 지원합니다.")
+//            true
+//        }
+//    }
+//
+//    fun isBluetoothEnabled(): Boolean {
+//        return if (bluetoothAdapter?.isEnabled == false) {   // 기기의 블루투스 비활성화 상태
+//            false
+//        } else {
+//            true
+//        }
+//    }
 
 
 }

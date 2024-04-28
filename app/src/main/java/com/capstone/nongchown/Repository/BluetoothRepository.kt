@@ -10,5 +10,7 @@ interface BluetoothRepository {
     suspend fun connectToDevice(bluetoothDevice: BluetoothDevice)
     fun stopDiscovery()
     fun cancelDiscovery()
+    fun isBluetoothEnabled() : Boolean
+    fun isBluetoothSupport() : Boolean
 
 }
