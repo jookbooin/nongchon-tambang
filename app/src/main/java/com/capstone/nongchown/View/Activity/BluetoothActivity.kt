@@ -47,6 +47,11 @@ class BluetoothActivity : AppCompatActivity(){
         // 1차 권한 처리 ( 위치 정보, 블루투스 활성화 )
         requestBluetoothPermissions()
 
+        val btnSendData: Button = findViewById(R.id.btnsenddata)
+        btnSendData.setOnClickListener {
+            bluetoothViewModel.sendDataToDevice()
+        }
+
         // 디바이스 연결 / 새 기기 추가
         val btnDeviceAdd: Button = findViewById(R.id.btndeviceadd)
         btnDeviceAdd.setOnClickListener {

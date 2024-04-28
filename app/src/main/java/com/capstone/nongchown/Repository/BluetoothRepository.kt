@@ -12,5 +12,6 @@ interface BluetoothRepository {
     fun cancelDiscovery()
     fun isBluetoothEnabled() : Boolean
     fun isBluetoothSupport() : Boolean
+    suspend fun sendDataToDevice()
 
 }

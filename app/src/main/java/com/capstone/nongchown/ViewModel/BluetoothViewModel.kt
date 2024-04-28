@@ -58,6 +58,12 @@ class BluetoothViewModel @Inject constructor(private val bluetoothRepository: Bl
         }
     }
 
+    fun sendDataToDevice() {
+        viewModelScope.launch {
+            bluetoothRepository.sendDataToDevice()
+        }
+    }
+
     fun isBluetoothEnabled(): Boolean{
         return bluetoothRepository.isBluetoothEnabled()
     }
@@ -65,6 +71,8 @@ class BluetoothViewModel @Inject constructor(private val bluetoothRepository: Bl
     fun isBluetoothSupport(): Boolean{
         return bluetoothRepository.isBluetoothSupport()
     }
+
+
 
     sealed class DiscoveryState {
         object Loading : DiscoveryState()

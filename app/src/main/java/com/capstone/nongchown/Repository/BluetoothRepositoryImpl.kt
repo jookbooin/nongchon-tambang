@@ -15,6 +15,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
+import java.io.IOException
+import java.io.OutputStream
 import java.util.UUID
 import javax.inject.Inject
 import kotlin.coroutines.coroutineContext
@@ -124,6 +126,24 @@ class BluetoothRepositoryImpl @Inject constructor(
         bluetoothAdapter?.cancelDiscovery()
     }
 
+    override suspend fun sendDataToDevice() {
+        withContext(Dispatchers.IO) {
+            bluetoothSocket?.let {
+                try {
+                    val outputStream: OutputStream = it.outputStream
+                    val dataString = "jookbooin?".toByteArray()
+                    outputStream.write(dataString)
+                    outputStream.flush() // 즉시 전송, 출력
+                    Log.d("[로그]", "데이터 전송 성공")
+                } catch (e: IOException) {
+                    Log.e("[로그]", "전송 실패", e)
+                }
+            } ?: run {
+                Log.d("[로그]", "BluetoothSocket이 연결되어 있지 않습니다.")
+            }
+        }
+    }
+
     override fun isBluetoothEnabled(): Boolean {
         return if (bluetoothAdapter?.isEnabled == false) {   // 기기의 블루투스 비활성화 상태
             false
@@ -141,7 +161,6 @@ class BluetoothRepositoryImpl @Inject constructor(
             true
         }
     }
-
 
     @Suppress("DEPRECATION", "MissingPermission")
     private val deviceScanReceiver = object : BroadcastReceiver() {
