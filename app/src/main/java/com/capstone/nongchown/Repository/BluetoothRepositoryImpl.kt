@@ -34,7 +34,7 @@ class BluetoothRepositoryImpl @Inject constructor(
 
     @SuppressLint("MissingPermission")
     override fun startDiscovery(): MutableStateFlow<List<BluetoothDevice>> {
-        if(_discoveredDeviceList.value.isNotEmpty()) {
+        if (_discoveredDeviceList.value.isNotEmpty()) {
             Log.d("[로그]", "INIT LIST")
             _discoveredDeviceList.value = emptyList()
         }
@@ -71,34 +71,36 @@ class BluetoothRepositoryImpl @Inject constructor(
         return _pairedDeviceList
     }
 
+    /***
+     * bluetoothDevice.bondState : 10(BOND_NONE_페어링 이전), 11(BOND_BONDING_페어링 중), 12(BOND_BONDED_페어링 완료)
+     */
     @SuppressLint("MissingPermission")
     suspend override fun connectToDevice(bluetoothDevice: BluetoothDevice) {
         Log.d("[로그]", "[ ${Thread.currentThread().name} ]")
         Log.d("[로그]", "CONNECT TO DEVICE ( ${bluetoothDevice.name} : ${bluetoothDevice.address}")
 
-        try {
-            /**  BluetoothDevice 객체가 아직 페어링되지 않았을 때 */
-            if (bluetoothDevice.bondState != BluetoothDevice.BOND_BONDED) {
-
-                bluetoothDevice.createBond() /** 페어링 과정 완료 후 ACTION_BOND_STATE_CHANGED 반환 */
-            }
-
-            /**
-             * 실행환경 변화 : Dispatcher.IO 환경에서 코루틴을 실행  ( 네트워크 작업 )
-             * 순차적 실행 표현 가능
-             * */
-            withContext(Dispatchers.IO) {
-                Log.d("[로그]", "[ ${Thread.currentThread().name} ] - [ $coroutineContext ]")
-                bluetoothSocket?.close()
-                bluetoothSocket = createBluetoothSocket(bluetoothDevice)
-                bluetoothSocket?.connect()
-            }
-            Log.d("[로그]", "[ ${Thread.currentThread().name} ] - [ $coroutineContext ]")
-            connectedJob?.cancel()
-        } catch (e: Exception) {
-            Log.d("[로그]", "${e.message}")
-
+        /**  BluetoothDevice 객체가 아직 페어링되지 않았을 때 */
+        if (bluetoothDevice.bondState != BluetoothDevice.BOND_BONDED) {
+            Log.d("[로그]", "페어링 이전 상태 : ${bluetoothDevice.bondState}")
+            bluetoothDevice.createBond()
+            /** 페어링 과정 완료 후 ACTION_BOND_STATE_CHANGED 반환 */
         }
+
+        /**
+         * 실행환경 변화 : Dispatcher.IO 환경에서 코루틴을 실행  ( 네트워크 작업 )
+         * 순차적 실행 표현 가능
+         * */
+        withContext(Dispatchers.IO) {
+            Log.d("[로그]", "[ ${Thread.currentThread().name} ] - [ $coroutineContext ]")
+            bluetoothSocket?.close()
+            bluetoothSocket = createBluetoothSocket(bluetoothDevice)
+            Log.d("[로그]", "연결 시작 전: ${bluetoothDevice.name} : ${bluetoothDevice.address} 페어링 상태 : ${bluetoothDevice.bondState}")
+            bluetoothSocket?.connect()
+            Log.d("[로그]", "연결 성공: ${bluetoothDevice.name} : ${bluetoothDevice.address} 페어링 상태 : ${bluetoothDevice.bondState}")
+        }
+        Log.d("[로그]", "[ ${Thread.currentThread().name} ] - [ $coroutineContext ]")
+        connectedJob?.cancel()
+
     }
 
     @SuppressLint("MissingPermission")
@@ -163,19 +165,24 @@ class BluetoothRepositoryImpl @Inject constructor(
                     }
                 }
 
-                BluetoothDevice.ACTION_ACL_CONNECTED->{
+                BluetoothDevice.ACTION_ACL_CONNECTED -> {
                     Log.d("[로그]", "ACTION ACL CONNECTED")
                 }
 
-                BluetoothDevice.ACTION_BOND_STATE_CHANGED->{
-                    Log.d("[로그]", "ACTION BOND STATE CHANGED")
+                BluetoothDevice.ACTION_BOND_STATE_CHANGED -> {
+                    val device = intent?.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
+                    device?.let {
+                        val bondState = it.bondState
+                        Log.d("[로그]", "페어링 상태 변화 ( Name: ${device.name}, Address: ${device.address}, 페어링 상태 : : ${device.bondState} )")
+                        // bondState를 이용해 현재 페어링 상태를 로그로 찍거나 다른 처리를 할 수 있습니다.
+                    }
                 }
 
-                BluetoothDevice.ACTION_PAIRING_REQUEST->{
+                BluetoothDevice.ACTION_PAIRING_REQUEST -> {
                     Log.d("[로그]", "ACTION PAIRING REQUEST")
                 }
 
-                BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED->{
+                BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED -> {
                     Log.d("[로그]", "ACTION CONNECTION STATE CHANGED")
                 }
 

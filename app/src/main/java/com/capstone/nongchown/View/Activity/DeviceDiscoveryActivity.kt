@@ -16,10 +16,12 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.capstone.nongchown.Adapter.BluetoothAdapter
 import com.capstone.nongchown.R
+import com.capstone.nongchown.Utils.showToast
 import com.capstone.nongchown.ViewModel.BluetoothViewModel
 import com.capstone.nongchown.ViewModel.BluetoothViewModel.DiscoveryState
 import com.capstone.nongchown.databinding.ActivityDeviceDiscoveryBinding
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -47,12 +49,10 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
         setupRecyclerView()
         startDiscovery()
         showDiscoveredBluetoothDevice()
-
+        showConnectSuccessMessage()
 
         binding.btncanceldiscovery.setOnClickListener() {
-            Log.d("[로그]", "SCAN CANCEL")
-            bluetoothViewModel.cancelBluetoothDiscovery()
-            finish()
+            cancelAndFinish()
         }
 
         bluetoothAdapter.itemClick = object : BluetoothAdapter.ItemClick {
@@ -99,12 +99,29 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
                         is DiscoveryState.Loading -> loading()
                         is DiscoveryState.Success -> success(state.devices)
                         is DiscoveryState.Error -> Log.d("state error", "STATE ERROR")
-
                     }
                 }
-
             }
         }
+    }
+
+    private fun showConnectSuccessMessage() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                bluetoothViewModel.connectionStatus.collect { isConnected ->
+                    if (isConnected) {
+                        showToast("연결되었습니다.")
+                        delay(1000)
+                        cancelAndFinish()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun cancelAndFinish() {
+        bluetoothViewModel.cancelBluetoothDiscovery()
+        finish()
     }
 
     @SuppressLint("MissingPermission", "NotifyDataSetChanged")
@@ -112,12 +129,11 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
         Log.d("[로그]", "UPDATE LIST")
         // 디바이스 리스트를 화면에 표시하는 로직 구현
         devices?.forEach { device ->
-            Log.d("[로그]", "Name: ${device.name}, Address: ${device.address}")
+            Log.d("[로그]", "SUCCESS ( Name: ${device.name}, Address: ${device.address} )")
         }
 
         bluetoothAdapter.deviceList = devices
         bluetoothAdapter.notifyDataSetChanged()
     }
-
 
 }
