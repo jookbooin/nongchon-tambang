@@ -2,6 +2,7 @@ package com.capstone.nongchown.View.Activity
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -15,6 +16,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.capstone.nongchown.Adapter.BluetoothAdapter
+import com.capstone.nongchown.Model.BluetoothService
 import com.capstone.nongchown.R
 import com.capstone.nongchown.Utils.showToast
 import com.capstone.nongchown.ViewModel.BluetoothViewModel
@@ -112,6 +114,7 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
                     if (isConnected) {
                         showToast("연결되었습니다.")
                         delay(1000)
+                        startBluetoothService()
                         cancelAndFinish()
                     }
                 }
@@ -134,6 +137,11 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
 
         bluetoothAdapter.deviceList = devices
         bluetoothAdapter.notifyDataSetChanged()
+    }
+
+    private fun startBluetoothService() {
+        val serviceIntent = Intent(this, BluetoothService::class.java)
+        startService(serviceIntent)
     }
 
 }

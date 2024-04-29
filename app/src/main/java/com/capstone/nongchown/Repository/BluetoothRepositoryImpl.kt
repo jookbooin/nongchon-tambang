@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
 import java.io.IOException
+import java.io.InputStream
 import java.io.OutputStream
 import java.util.UUID
 import javax.inject.Inject
@@ -94,15 +95,17 @@ class BluetoothRepositoryImpl @Inject constructor(
          * */
         withContext(Dispatchers.IO) {
             Log.d("[로그]", "[ ${Thread.currentThread().name} ] - [ $coroutineContext ]")
-            bluetoothSocket?.close()
+            if(bluetoothSocket != null){
+                disconnect()
+            }
             bluetoothSocket = createBluetoothSocket(bluetoothDevice)
             Log.d("[로그]", "연결 시작 전: ${bluetoothDevice.name} : ${bluetoothDevice.address} 페어링 상태 : ${bluetoothDevice.bondState}")
             bluetoothSocket?.connect()
             Log.d("[로그]", "연결 성공: ${bluetoothDevice.name} : ${bluetoothDevice.address} 페어링 상태 : ${bluetoothDevice.bondState}")
         }
+
         Log.d("[로그]", "[ ${Thread.currentThread().name} ] - [ $coroutineContext ]")
         connectedJob?.cancel()
-
     }
 
     @SuppressLint("MissingPermission")
@@ -126,12 +129,13 @@ class BluetoothRepositoryImpl @Inject constructor(
         bluetoothAdapter?.cancelDiscovery()
     }
 
+    // 데이터 연결 확인 (send)
     override suspend fun sendDataToDevice() {
         withContext(Dispatchers.IO) {
             bluetoothSocket?.let {
                 try {
                     val outputStream: OutputStream = it.outputStream
-                    val dataString = "jookbooin?".toByteArray()
+                    val dataString = "jookbooin?\n".toByteArray()
                     outputStream.write(dataString)
                     outputStream.flush() // 즉시 전송, 출력
                     Log.d("[로그]", "데이터 전송 성공")
@@ -143,6 +147,34 @@ class BluetoothRepositoryImpl @Inject constructor(
             }
         }
     }
+
+    override fun readDataFromDevice() {
+        Log.d("[로그]", "수신")
+//        withContext(Dispatchers.IO) {
+            bluetoothSocket?.let { socket ->
+                val inputStream: InputStream = socket.inputStream
+                var buffer = ByteArray(1024)
+                var bytes: Int
+                while (true) {
+                    try {
+                        bytes = inputStream.read(buffer) // 주어진 buffer 크기(1024) 만큼 데이터를 읽고 총 몇 byte를 읽었는지 반환
+                        Log.d("[로그]", "읽기 byte: $bytes")
+
+                        val message = buffer.decodeToString(endIndex = bytes)
+                        Log.d("[로그]", "수신된 메시지: $message")
+                    } catch (e: IOException) {
+                        Log.e("[로그]", "데이터 읽기 중 오류 발생", e)
+                        break // 또는 연결 재시도 등의 처리를 할 수 있습니다.
+                    }
+                }
+
+
+            } ?: run {
+                Log.d("[로그]", "BluetoothSocket이 연결되어 있지 않습니다.")
+            }
+//        }
+    }
+
 
     override fun isBluetoothEnabled(): Boolean {
         return if (bluetoothAdapter?.isEnabled == false) {   // 기기의 블루투스 비활성화 상태
@@ -225,6 +257,15 @@ class BluetoothRepositoryImpl @Inject constructor(
 
             }
 
+        }
+    }
+
+    fun disconnect() {
+        try {
+            bluetoothSocket?.close() // 소켓 닫기 시도
+        } catch (e: IOException) {
+        } finally {
+            bluetoothSocket = null // 소켓 참조 제거
         }
     }
 
