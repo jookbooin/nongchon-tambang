@@ -1,14 +1,11 @@
 package com.capstone.nongchown.View.Activity
 
 import android.os.Bundle
-import android.util.Log
-import android.widget.Button
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.capstone.nongchown.R
-import com.capstone.nongchown.Utils.moveActivity
 
 class UserProfileActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,3 +22,6 @@ class UserProfileActivity : AppCompatActivity() {
         }
     }
 }
+
+
+
