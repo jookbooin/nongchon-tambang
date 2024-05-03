@@ -168,7 +168,6 @@ class BluetoothRepositoryImpl @Inject constructor(
                     }
                 }
 
-
             } ?: run {
                 Log.d("[로그]", "BluetoothSocket이 연결되어 있지 않습니다.")
             }
@@ -191,6 +190,15 @@ class BluetoothRepositoryImpl @Inject constructor(
         } else {
             Log.d("[로그]", "기기가 블루투스를 지원합니다.")
             true
+        }
+    }
+
+    override fun disconnect() {
+        try {
+            bluetoothSocket?.close() // 소켓 닫기 시도
+        } catch (e: IOException) {
+        } finally {
+            bluetoothSocket = null // 소켓 참조 제거
         }
     }
 
@@ -260,13 +268,6 @@ class BluetoothRepositoryImpl @Inject constructor(
         }
     }
 
-    fun disconnect() {
-        try {
-            bluetoothSocket?.close() // 소켓 닫기 시도
-        } catch (e: IOException) {
-        } finally {
-            bluetoothSocket = null // 소켓 참조 제거
-        }
-    }
+
 
 }

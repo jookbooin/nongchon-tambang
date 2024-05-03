@@ -1,14 +1,20 @@
 package com.capstone.nongchown.Model
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.Service
+import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo
+import android.os.Build
 import android.os.IBinder
 import android.util.Log
+import androidx.core.app.NotificationCompat
+import com.capstone.nongchown.R
 import com.capstone.nongchown.Repository.BluetoothRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -24,19 +30,49 @@ class BluetoothService : Service() {
     private var binder: IBinder? = null        // bind 된 클라이언트와 소통하기 위한 인터페이스
     private var allowRebind: Boolean = false   // onRebind() 메소드가 사용될지 말지를 결정함
 
+    private lateinit var notificationManager: NotificationManager
+
     override fun onCreate() {
         super.onCreate()
-        Log.d("[로그]", "BluetoothService 생성")
+        Log.d("[로그]", "Service onCreate()")
+        notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // startService()에 의해 서비스가 시작될 때
-        Log.d("[로그]", "BluetoothService 실행 시작")
+        Log.d("[로그]", "Service onStartCommand()")
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channelName = "count"
+            val importance = NotificationManager.IMPORTANCE_NONE
+            val channel = NotificationChannel("1", channelName, importance).apply {
+                description = "Description of my channel"
+            }
+
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val notiBuilder = NotificationCompat.Builder(this, "1")
+            .setSmallIcon(R.drawable.ic_launcher_background)
+            .setContentTitle("농촌 실행중")
+            .setContentText("농촌 서비스가 안전하게 지키고 있습니다.")
+
+        if (Build.VERSION.SDK_INT < 34) {
+            startForeground(1, notiBuilder.build())
+        } else {
+            startForeground(
+                1, notiBuilder.build(),
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+            )
+        }
+
         serviceScope.launch {
             bluetoothRepository.readDataFromDevice()
         }
+
         return START_NOT_STICKY
     }
+
 
     override fun onBind(intent: Intent): IBinder? {
         // bindService()에 의해 서비스가 시작될 때
@@ -55,8 +91,10 @@ class BluetoothService : Service() {
 
     override fun onDestroy() {
         // 서비스가 파괴될 때
-        serviceScope.cancel()
-        Log.d("[로그]", "BluetoothService 종료")
         super.onDestroy()
+//        serviceScope.cancel()
+        Log.d("[로그]", "onDestroy()")
+        notificationManager.cancelAll()
+        bluetoothRepository.disconnect()
     }
 }

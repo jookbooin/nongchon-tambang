@@ -14,5 +14,6 @@ interface BluetoothRepository {
     fun readDataFromDevice()
     fun isBluetoothEnabled(): Boolean
     fun isBluetoothSupport(): Boolean
+    fun disconnect()
 
 }

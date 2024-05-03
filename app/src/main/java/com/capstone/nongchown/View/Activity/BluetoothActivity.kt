@@ -19,6 +19,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.capstone.nongchown.Constants
+import com.capstone.nongchown.Model.BluetoothService
 import com.capstone.nongchown.Model.Enum.BluetoothState
 import com.capstone.nongchown.R
 import com.capstone.nongchown.Utils.moveActivity
@@ -50,6 +51,12 @@ class BluetoothActivity : AppCompatActivity(){
         val btnSendData: Button = findViewById(R.id.btnsenddata)
         btnSendData.setOnClickListener {
             bluetoothViewModel.sendDataToDevice()
+        }
+
+        val btnRemoveService: Button = findViewById(R.id.btnremoveservice)
+        btnRemoveService.setOnClickListener {
+            val serviceIntent = Intent(this, BluetoothService::class.java)
+            stopService(serviceIntent)
         }
 
         // 디바이스 연결 / 새 기기 추가

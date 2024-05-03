@@ -3,6 +3,7 @@ package com.capstone.nongchown.View.Activity
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -141,7 +142,11 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
 
     private fun startBluetoothService() {
         val serviceIntent = Intent(this, BluetoothService::class.java)
-        startService(serviceIntent)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent)
+        }else{
+            startService(serviceIntent)
+        }
     }
 
 }
