@@ -21,5 +21,6 @@ object Constants {
 
         const val PERMISSION_REQUEST_CODE_S = 32 // 31 이상
         const val PERMISSION_REQUEST_CODE = 30
+        const val SPP_UUID = "00001101-0000-1000-8000-00805F9B34FB"
 
 }
