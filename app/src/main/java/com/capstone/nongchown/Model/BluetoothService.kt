@@ -12,9 +12,11 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.capstone.nongchown.R
 import com.capstone.nongchown.Repository.BluetoothRepository
+import com.capstone.nongchown.View.Activity.AccidentActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -67,7 +69,11 @@ class BluetoothService : Service() {
         }
 
         serviceScope.launch {
-            bluetoothRepository.readDataFromDevice()
+            bluetoothRepository.readDataFromDevice().collect{ data->
+                if(data.isNotEmpty()){
+                    showScreen(data)
+                }
+            }
         }
 
         return START_NOT_STICKY
@@ -92,9 +98,19 @@ class BluetoothService : Service() {
     override fun onDestroy() {
         // 서비스가 파괴될 때
         super.onDestroy()
-//        serviceScope.cancel()
         Log.d("[로그]", "onDestroy()")
+
+        serviceScope.cancel()
         notificationManager.cancelAll()
         bluetoothRepository.disconnect()
+    }
+
+    fun showScreen(data: String) {
+        val intent = Intent(this, AccidentActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            Log.d("[로그]", "data 받을 시 화면 띄우기")
+            putExtra("data", data)
+        }
+        startActivity(intent)
     }
 }

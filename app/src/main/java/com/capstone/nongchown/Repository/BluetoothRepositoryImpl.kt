@@ -12,8 +12,11 @@ import android.util.Log
 import com.capstone.nongchown.Constants
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.io.InputStream
@@ -23,8 +26,7 @@ import javax.inject.Inject
 import kotlin.coroutines.coroutineContext
 
 class BluetoothRepositoryImpl @Inject constructor(
-    private val context: Context,
-    private val bluetoothAdapter: BluetoothAdapter
+    private val context: Context, private val bluetoothAdapter: BluetoothAdapter
 ) : BluetoothRepository {
 
     //    private var deviceScanReceiver: BroadcastReceiver? = null // null 초기화 : 필요한 시점까지 객체의 생성을 늦춘다.
@@ -43,13 +45,13 @@ class BluetoothRepositoryImpl @Inject constructor(
         }
 
         val filter = IntentFilter()
-        filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED) //블루투스 상태변화 액션
-        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED) //기기 검색 시작
-        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED) //기기 검색 종료
-        filter.addAction(BluetoothDevice.ACTION_FOUND) //기기 검색됨
-        filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED) //a low level (ACL) connection 연결 확인
-        filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED) //  원격 블루투스 장치의 페어링 상태가 변경 (페어링?)
-        filter.addAction(BluetoothDevice.ACTION_PAIRING_REQUEST)  // 페어링 요청
+        filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED)                 // 블루투스 상태변화 액션
+        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)             // 기기 검색 시작
+        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)            // 기기 검색 종료
+        filter.addAction(BluetoothDevice.ACTION_FOUND)                          // 기기 검색됨
+        filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED)                  // a low level (ACL) connection 연결 확인
+        filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)             // 원격 블루투스 장치의 페어링 상태가 변경 (페어링?)
+        filter.addAction(BluetoothDevice.ACTION_PAIRING_REQUEST)                // 페어링 요청
         filter.addAction(BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED)
         context.registerReceiver(deviceScanReceiver, filter)
         bluetoothAdapter?.startDiscovery()
@@ -95,7 +97,7 @@ class BluetoothRepositoryImpl @Inject constructor(
          * */
         withContext(Dispatchers.IO) {
             Log.d("[로그]", "[ ${Thread.currentThread().name} ] - [ $coroutineContext ]")
-            if(bluetoothSocket != null){
+            if (bluetoothSocket != null) {
                 disconnect()
             }
             bluetoothSocket = createBluetoothSocket(bluetoothDevice)
@@ -137,7 +139,7 @@ class BluetoothRepositoryImpl @Inject constructor(
                     val outputStream: OutputStream = it.outputStream
                     val dataString = "jookbooin?\n".toByteArray()
                     outputStream.write(dataString)
-                    outputStream.flush() // 즉시 전송, 출력
+                    outputStream.flush()                                    // 즉시 전송, 출력
                     Log.d("[로그]", "데이터 전송 성공")
                 } catch (e: IOException) {
                     Log.e("[로그]", "전송 실패", e)
@@ -148,35 +150,45 @@ class BluetoothRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun readDataFromDevice() {
-        Log.d("[로그]", "수신")
-//        withContext(Dispatchers.IO) {
-            bluetoothSocket?.let { socket ->
-                val inputStream: InputStream = socket.inputStream
-                var buffer = ByteArray(1024)
-                var bytes: Int
-                while (true) {
-                    try {
-                        bytes = inputStream.read(buffer) // 주어진 buffer 크기(1024) 만큼 데이터를 읽고 총 몇 byte를 읽었는지 반환
-                        Log.d("[로그]", "읽기 byte: $bytes")
+    override fun readDataFromDevice(): Flow<String> = flow {
+        Log.d("[로그]", "DATA 수신 대기")
+        bluetoothSocket?.let { socket ->
+            val inputStream: InputStream = socket.inputStream
+            var buffer = ByteArray(1024)
+            var bytes: Int
+            while (true) {
+                try {
+                    bytes = inputStream.read(buffer)                        // 주어진 buffer 크기(1024) 만큼 데이터를 읽고 총 몇 byte를 읽었는지 반환
+                    val message = buffer.decodeToString(endIndex = bytes)
+                    Log.d("[로그]", "수신된 메시지: $message")
 
-                        val message = buffer.decodeToString(endIndex = bytes)
-                        Log.d("[로그]", "수신된 메시지: $message")
-                    } catch (e: IOException) {
-                        Log.e("[로그]", "데이터 읽기 중 오류 발생", e)
-                        break // 또는 연결 재시도 등의 처리를 할 수 있습니다.
+                    emit(message)                                           // message 방출 -> collect에서 수집
+                    /**
+                     * 데이터가 1번만 들어오도록 앱에서 처리해야 하는 경우
+                     * 1. 30초 delay
+                     * 2. 30초 동안 buffer에 들어온 값 초기화
+                     * */
+                    delay(30000)                                    // 30초 마다 1번씩만 들어오도록 해야한다?
+                    while (inputStream.available() > 0) {
+                        Log.d("[로그]", "30초 동안 수신 받은 buffer 초기화")
+                        inputStream.read(buffer)
                     }
-                }
+                    Log.d("[로그]", "30초 이후 buffer 초기화 ")
 
-            } ?: run {
-                Log.d("[로그]", "BluetoothSocket이 연결되어 있지 않습니다.")
+                } catch (e: IOException) {
+                    Log.e("[로그]", "데이터 읽기 중 오류 발생", e)
+                    break                                                   // 또는 연결 재시도 등의 처리를 할 수 있습니다.
+                }
             }
-//        }
+
+        } ?: run {
+            Log.d("[로그]", "BluetoothSocket이 연결되어 있지 않습니다.")
+        }
     }
 
 
     override fun isBluetoothEnabled(): Boolean {
-        return if (bluetoothAdapter?.isEnabled == false) {   // 기기의 블루투스 비활성화 상태
+        return if (bluetoothAdapter?.isEnabled == false) {                  // 기기의 블루투스 비활성화 상태
             false
         } else {
             true
@@ -267,7 +279,6 @@ class BluetoothRepositoryImpl @Inject constructor(
 
         }
     }
-
 
 
 }

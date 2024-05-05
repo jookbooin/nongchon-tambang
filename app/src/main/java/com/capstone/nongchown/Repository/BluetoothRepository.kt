@@ -1,6 +1,7 @@
 package com.capstone.nongchown.Repository
 
 import android.bluetooth.BluetoothDevice
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
 interface BluetoothRepository {
@@ -11,7 +12,7 @@ interface BluetoothRepository {
     fun stopDiscovery()
     fun cancelDiscovery()
     suspend fun sendDataToDevice()
-    fun readDataFromDevice()
+    fun readDataFromDevice() : Flow<String>
     fun isBluetoothEnabled(): Boolean
     fun isBluetoothSupport(): Boolean
     fun disconnect()
