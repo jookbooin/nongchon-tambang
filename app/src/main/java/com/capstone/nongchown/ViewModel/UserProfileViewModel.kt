@@ -6,12 +6,25 @@ import androidx.lifecycle.ViewModel
 import com.capstone.nongchown.R
 
 class UserProfileViewModel : ViewModel() {
+    fun loadStoredData(){
+//        앱을 시작하면 데이터베이스에서 사용자 정보를 긁어오는 메소드
+    }
+
     fun validateEmail(email: String): String {
         val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$".toRegex()
         if (emailRegex.matches(email)) {
             return email
         } else {
             throw IllegalArgumentException("Invalid email format")
+        }
+    }
+
+    fun validateAge(age:String):String{
+        val ageRegex = "^(?:150|[1-9]?[0-9])$".toRegex()
+        if (ageRegex.matches(age)) {
+            return age
+        } else {
+            throw IllegalArgumentException("Invalid age range")
         }
     }
 
@@ -50,13 +63,20 @@ class UserProfileViewModel : ViewModel() {
         }
     }
 
-    fun userProfileSave(name: String, email: String, phone: String, emergencyContact: ArrayList<String>) {
-
+    fun userProfileSave(
+        name: String,
+        email: String,
+        age: String,
+        gender: String,
+        emergencyContactList: MutableList<String>
+    ) {
         try {
             val validEmail = validateEmail(email)
-            val validPhone = validatePhone(phone)
-//            val validEmergencyContact = validatePhone(emergencyContact)
-
+            val validAge = validateAge(age)
+            val validEmergencyContacts = emergencyContactList.map { contact ->
+                validatePhone(contact)
+            }
+//            값에 별 문제가 없으면 데이터베이스에 저장
         } catch (e: IllegalArgumentException) {
             println("Error: ${e.message}")
         }
