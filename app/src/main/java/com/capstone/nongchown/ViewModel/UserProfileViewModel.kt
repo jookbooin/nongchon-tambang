@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import com.capstone.nongchown.R
 
 class UserProfileViewModel : ViewModel() {
-    fun validateEmail(email: String):String {
+    fun validateEmail(email: String): String {
         val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$".toRegex()
         if (emailRegex.matches(email)) {
             return email
@@ -50,18 +50,18 @@ class UserProfileViewModel : ViewModel() {
         }
     }
 
-    fun userProfileSave(name: String, email: String, phone: String, emergencyContact: String) {
+    fun userProfileSave(name: String, email: String, phone: String, emergencyContact: ArrayList<String>) {
 
         try {
             val validEmail = validateEmail(email)
             val validPhone = validatePhone(phone)
-            val validEmergencyContact = validatePhone(emergencyContact)
+//            val validEmergencyContact = validatePhone(emergencyContact)
 
         } catch (e: IllegalArgumentException) {
             println("Error: ${e.message}")
         }
 
-
     }
+
 
 }
