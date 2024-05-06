@@ -54,6 +54,12 @@ class DeviceAdapter(var deviceList: List<BluetoothDevice>) : RecyclerView.Adapte
         val address = binding.address
     }
 
+    @SuppressLint("NotifyDataSetChanged")
+    fun updateDevices(newDevices: List<BluetoothDevice>) {
+        deviceList = newDevices
+        notifyDataSetChanged()
+    }
+
     /** 클릭 이벤트를 위한 inf */
     interface ItemClick {
         fun onClick(view : View, position : Int)  /** 클릭시 발생시킬 이벤트 */

@@ -59,7 +59,7 @@ class BluetoothRepositoryImpl @Inject constructor(
     }
 
     @SuppressLint("MissingPermission")
-    override fun getPairedDevice(): StateFlow<List<BluetoothDevice>> {
+    override fun getPairedDevices(): StateFlow<List<BluetoothDevice>> {
         Log.d("[로그]", "GET PAIRED DEVICES")
 
         if (bluetoothAdapter != null) {
@@ -69,6 +69,11 @@ class BluetoothRepositoryImpl @Inject constructor(
             }
             // Get the list of paired devices
             val pairedDevices: Set<BluetoothDevice> = bluetoothAdapter.bondedDevices
+
+            pairedDevices.forEach { device ->
+                Log.d("[로그]", "페어링 되어있는 기기 ( Name: ${device.name}, Address: ${device.address} )")
+            }
+
             _pairedDeviceList.value = pairedDevices.toList()
         } else {
             // Bluetooth is not supported on this device
@@ -150,6 +155,7 @@ class BluetoothRepositoryImpl @Inject constructor(
         }
     }
 
+    // 단방향으로 data 전달시 Flow로 전달 생산자 (emit)
     override fun readDataFromDevice(): Flow<String> = flow {
         Log.d("[로그]", "DATA 수신 대기")
         bluetoothSocket?.let { socket ->
@@ -176,8 +182,8 @@ class BluetoothRepositoryImpl @Inject constructor(
                     Log.d("[로그]", "30초 이후 buffer 초기화 ")
 
                 } catch (e: IOException) {
-                    Log.e("[로그]", "데이터 읽기 중 오류 발생", e)
-                    break                                                   // 또는 연결 재시도 등의 처리를 할 수 있습니다.
+                    Log.e("[로그]", "데이터 읽기 중 오류 발생 OR Socket 중단", e)
+                    break
                 }
             }
 
@@ -211,12 +217,15 @@ class BluetoothRepositoryImpl @Inject constructor(
         } catch (e: IOException) {
         } finally {
             bluetoothSocket = null // 소켓 참조 제거
+            Log.d("[로그]","소켓 닫기")
         }
     }
 
     @Suppress("DEPRECATION", "MissingPermission")
     private val deviceScanReceiver = object : BroadcastReceiver() {
         val tempDeviceList = mutableListOf<BluetoothDevice>()
+        var pairedDeviceAddresses: Set<String>? = null
+
         override fun onReceive(context: Context?, intent: Intent?) {
 
             var action = ""
@@ -232,24 +241,30 @@ class BluetoothRepositoryImpl @Inject constructor(
                 BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {
                     Log.d("[로그]", "DISCOVERY STARTED")
                     tempDeviceList.clear()
+                    pairedDeviceAddresses = bluetoothAdapter.bondedDevices.map { it.address }.toSet()  // device -> mac 주소로만 변환
                 }
 
                 BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
                     Log.d("[로그]", "DISCOVERY FINISHED")
                     _discoveredDeviceList.value = tempDeviceList
+                    pairedDeviceAddresses = null
                 }
 
                 BluetoothDevice.ACTION_FOUND -> {
                     val device = intent?.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
-                    device?.let {
+                    device?.let {discoveredDevice ->
+
                         // 로그 찍기 용
-                        if (it.name != null) {
-                            Log.d("[로그]", "FOUND ( Name: ${device.name}, Address: ${device.address} )")
+                        if (discoveredDevice.name != null) {
+                            Log.d("[로그]", "FOUND ( Name: ${discoveredDevice.name}, Address: ${discoveredDevice.address} )")
                         }
 
+                        // 기기 (mac 주소)가 이미 탐색되었는지 확인
+                        val isPaired = pairedDeviceAddresses?.contains(discoveredDevice.address) ?: false
+
                         // 중복 방지
-                        if (it.name != null && !tempDeviceList.contains(it)) {
-                            tempDeviceList.add(it)
+                        if (!isPaired && discoveredDevice.name != null && !tempDeviceList.contains(discoveredDevice)) {
+                            tempDeviceList.add(discoveredDevice)
                         }
                     }
                 }

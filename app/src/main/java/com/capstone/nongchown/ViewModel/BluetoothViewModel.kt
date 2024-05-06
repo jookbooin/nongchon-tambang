@@ -24,6 +24,9 @@ class BluetoothViewModel @Inject constructor(private val bluetoothRepository: Bl
     private val _connectionStatus = MutableStateFlow(false) // 기본값으로 false
     val connectionStatus: StateFlow<Boolean> = _connectionStatus.asStateFlow()
 
+    val _pairedDevices= MutableStateFlow<List<BluetoothDevice>>(emptyList())
+    val pairedDevices: StateFlow<List<BluetoothDevice>> = _pairedDevices
+
     fun loadingDiscovery() {
         _bluetoothDiscoveryState.value = DiscoveryState.Loading
     }
@@ -32,6 +35,14 @@ class BluetoothViewModel @Inject constructor(private val bluetoothRepository: Bl
         viewModelScope.launch {//ViewModel 내에서 비동기 작업을 쉽게 수행
             bluetoothRepository.startDiscovery().collect() {
                 _bluetoothDiscoveryState.value = DiscoveryState.Success(it)
+            }
+        }
+    }
+
+    fun getPairedDevices() {
+        viewModelScope.launch {
+            bluetoothRepository.getPairedDevices().collect { pairedDevices ->
+                _pairedDevices.value = pairedDevices
             }
         }
     }

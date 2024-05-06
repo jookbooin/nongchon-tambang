@@ -55,11 +55,17 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
         showConnectSuccessMessage()
 
         binding.btncanceldiscovery.setOnClickListener() {
-            cancelAndFinish()
+            bluetoothViewModel.cancelBluetoothDiscovery()
+            finish()
         }
 
         deviceAdapter.itemClick = object : DeviceAdapter.ItemClick {
             override fun onClick(view: View, position: Int) {
+
+                // service가 시작되어 있다면 종료
+                val serviceIntent = Intent(this@DeviceDiscoveryActivity, BluetoothService::class.java)
+                stopService(serviceIntent)
+
                 val device = deviceAdapter.getDeviceAtPosition(position)
                 bluetoothViewModel.connectToDevice(device)
             }
@@ -116,16 +122,12 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
                         showToast("연결되었습니다.")
                         delay(1000)
                         startBluetoothService()
-                        cancelAndFinish()
+                        bluetoothViewModel.cancelBluetoothDiscovery()
+                        finish()
                     }
                 }
             }
         }
-    }
-
-    private fun cancelAndFinish() {
-        bluetoothViewModel.cancelBluetoothDiscovery()
-        finish()
     }
 
     @SuppressLint("MissingPermission", "NotifyDataSetChanged")
