@@ -7,39 +7,44 @@
     android:layout_height="match_parent"
     tools:context=".View.Activity.BluetoothActivity">
 
-
-    <Button
-        android:id="@+id/btndeviceadd"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="새 기기 추가"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-
-        app:layout_constraintTop_toBottomOf="@+id/btnremoveservice"
-        app:layout_constraintVertical_bias="0.497" />
-
     <Button
         android:id="@+id/btnsenddata"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/send_data"
 
-        app:layout_constraintBottom_toTopOf="@+id/btnremoveservice"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <Button
-        android:id="@+id/btnremoveservice"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="서비스 제거"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:ignore="MissingConstraints" />
+        android:layout_marginTop="80dp"
+         />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/paireddevice"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/btnsenddata"
+        app:layout_constraintBottom_toTopOf="@id/btndeviceadd"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="40dp"
+        android:layout_marginBottom="20dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp" />
+        />
+
+    <Button
+        android:id="@+id/btndeviceadd"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="새 기기 추가"
+
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginBottom="20dp"
+        android:layout_marginLeft="40dp"
+        android:layout_marginRight="40dp"
+        />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

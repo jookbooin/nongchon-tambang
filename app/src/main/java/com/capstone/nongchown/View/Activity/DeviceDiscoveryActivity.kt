@@ -16,7 +16,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.capstone.nongchown.Adapter.BluetoothAdapter
+import com.capstone.nongchown.Adapter.DeviceAdapter
 import com.capstone.nongchown.Model.BluetoothService
 import com.capstone.nongchown.R
 import com.capstone.nongchown.Utils.showToast
@@ -34,7 +34,7 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
 
     // Hilt 추가하면 -> val viewModel: BluetoothViewModel = hiltViewModel() 다음과 같이 씀
     lateinit var binding: ActivityDeviceDiscoveryBinding
-    lateinit var bluetoothAdapter: BluetoothAdapter
+    lateinit var deviceAdapter: DeviceAdapter
 
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,9 +58,9 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
             cancelAndFinish()
         }
 
-        bluetoothAdapter.itemClick = object : BluetoothAdapter.ItemClick {
+        deviceAdapter.itemClick = object : DeviceAdapter.ItemClick {
             override fun onClick(view: View, position: Int) {
-                val device = bluetoothAdapter.getDeviceAtPosition(position)
+                val device = deviceAdapter.getDeviceAtPosition(position)
                 bluetoothViewModel.connectToDevice(device)
             }
         }
@@ -73,9 +73,9 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        bluetoothAdapter = BluetoothAdapter(emptyList())
+        deviceAdapter = DeviceAdapter(emptyList())
         binding.devicerv.apply {
-            adapter = bluetoothAdapter
+            adapter = deviceAdapter
             layoutManager = LinearLayoutManager(this@DeviceDiscoveryActivity)
         }
     }
@@ -136,8 +136,8 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
             Log.d("[로그]", "SUCCESS ( Name: ${device.name}, Address: ${device.address} )")
         }
 
-        bluetoothAdapter.deviceList = devices
-        bluetoothAdapter.notifyDataSetChanged()
+        deviceAdapter.deviceList = devices
+        deviceAdapter.notifyDataSetChanged()
     }
 
     private fun startBluetoothService() {
