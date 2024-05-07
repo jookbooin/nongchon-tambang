@@ -1,16 +1,14 @@
 package com.capstone.nongchown.ViewModel
 
-import android.provider.ContactsContract.CommonDataKinds.Email
-import android.widget.TextView
+import android.util.Log
 import androidx.lifecycle.ViewModel
-import com.capstone.nongchown.R
 
 class UserProfileViewModel : ViewModel() {
     fun loadStoredData(){
 //        앱을 시작하면 데이터베이스에서 사용자 정보를 긁어오는 메소드
     }
 
-    fun validateEmail(email: String): String {
+    private fun validateEmail(email: String): String {
         val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$".toRegex()
         if (emailRegex.matches(email)) {
             return email
@@ -19,7 +17,7 @@ class UserProfileViewModel : ViewModel() {
         }
     }
 
-    fun validateAge(age:String):String{
+    private fun validateAge(age:String):String{
         val ageRegex = "^(?:150|[1-9]?[0-9])$".toRegex()
         if (ageRegex.matches(age)) {
             return age
@@ -28,7 +26,7 @@ class UserProfileViewModel : ViewModel() {
         }
     }
 
-    fun validatePhone(number: String): String {
+    private fun validatePhone(number: String): String {
         // 숫자와 하이픈만 허용
         val cleanNumber = number.filter { it.isDigit() || it == '-' }
         val digitsOnly = cleanNumber.filter { it.isDigit() }
@@ -76,9 +74,17 @@ class UserProfileViewModel : ViewModel() {
             val validEmergencyContacts = emergencyContactList.map { contact ->
                 validatePhone(contact)
             }
+
+            Log.d("[로그]", name)
+            Log.d("[로그]", validEmail)
+            Log.d("[로그]", validAge)
+            Log.d("[로그]", gender)
+            validEmergencyContacts.forEach{
+                eContact -> Log.d("[로그]", eContact)
+            }
 //            값에 별 문제가 없으면 데이터베이스에 저장
         } catch (e: IllegalArgumentException) {
-            println("Error: ${e.message}")
+            Log.d("[에러]", "${e.message}")
         }
 
     }
