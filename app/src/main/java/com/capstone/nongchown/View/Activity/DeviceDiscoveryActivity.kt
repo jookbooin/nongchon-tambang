@@ -2,6 +2,8 @@ package com.capstone.nongchown.View.Activity
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -14,12 +16,15 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.capstone.nongchown.Adapter.BluetoothAdapter
+import com.capstone.nongchown.Adapter.DeviceAdapter
+import com.capstone.nongchown.Model.BluetoothService
 import com.capstone.nongchown.R
+import com.capstone.nongchown.Utils.showToast
 import com.capstone.nongchown.ViewModel.BluetoothViewModel
 import com.capstone.nongchown.ViewModel.BluetoothViewModel.DiscoveryState
 import com.capstone.nongchown.databinding.ActivityDeviceDiscoveryBinding
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -29,7 +34,7 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
 
     // Hilt 추가하면 -> val viewModel: BluetoothViewModel = hiltViewModel() 다음과 같이 씀
     lateinit var binding: ActivityDeviceDiscoveryBinding
-    lateinit var bluetoothAdapter: BluetoothAdapter
+    lateinit var deviceAdapter: DeviceAdapter
 
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,17 +52,21 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
         setupRecyclerView()
         startDiscovery()
         showDiscoveredBluetoothDevice()
-
+        showConnectSuccessMessage()
 
         binding.btncanceldiscovery.setOnClickListener() {
-            Log.d("[로그]", "SCAN CANCEL")
             bluetoothViewModel.cancelBluetoothDiscovery()
             finish()
         }
 
-        bluetoothAdapter.itemClick = object : BluetoothAdapter.ItemClick {
+        deviceAdapter.itemClick = object : DeviceAdapter.ItemClick {
             override fun onClick(view: View, position: Int) {
-                val device = bluetoothAdapter.getDeviceAtPosition(position)
+
+                // service가 시작되어 있다면 종료
+                val serviceIntent = Intent(this@DeviceDiscoveryActivity, BluetoothService::class.java)
+                stopService(serviceIntent)
+
+                val device = deviceAdapter.getDeviceAtPosition(position)
                 bluetoothViewModel.connectToDevice(device)
             }
         }
@@ -70,9 +79,9 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        bluetoothAdapter = BluetoothAdapter(emptyList())
+        deviceAdapter = DeviceAdapter(emptyList())
         binding.devicerv.apply {
-            adapter = bluetoothAdapter
+            adapter = deviceAdapter
             layoutManager = LinearLayoutManager(this@DeviceDiscoveryActivity)
         }
     }
@@ -99,10 +108,24 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
                         is DiscoveryState.Loading -> loading()
                         is DiscoveryState.Success -> success(state.devices)
                         is DiscoveryState.Error -> Log.d("state error", "STATE ERROR")
-
                     }
                 }
+            }
+        }
+    }
 
+    private fun showConnectSuccessMessage() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                bluetoothViewModel.connectionStatus.collect { isConnected ->
+                    if (isConnected) {
+                        showToast("연결되었습니다.")
+                        delay(1000)
+                        startBluetoothService()
+                        bluetoothViewModel.cancelBluetoothDiscovery()
+                        finish()
+                    }
+                }
             }
         }
     }
@@ -112,12 +135,20 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
         Log.d("[로그]", "UPDATE LIST")
         // 디바이스 리스트를 화면에 표시하는 로직 구현
         devices?.forEach { device ->
-            Log.d("[로그]", "Name: ${device.name}, Address: ${device.address}")
+            Log.d("[로그]", "SUCCESS ( Name: ${device.name}, Address: ${device.address} )")
         }
 
-        bluetoothAdapter.deviceList = devices
-        bluetoothAdapter.notifyDataSetChanged()
+        deviceAdapter.deviceList = devices
+        deviceAdapter.notifyDataSetChanged()
     }
 
+    private fun startBluetoothService() {
+        val serviceIntent = Intent(this, BluetoothService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent)
+        }else{
+            startService(serviceIntent)
+        }
+    }
 
 }

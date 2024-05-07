@@ -9,59 +9,82 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Button
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.capstone.nongchown.Adapter.DeviceAdapter
 import com.capstone.nongchown.Constants
+import com.capstone.nongchown.Model.BluetoothService
 import com.capstone.nongchown.Model.Enum.BluetoothState
 import com.capstone.nongchown.R
 import com.capstone.nongchown.Utils.moveActivity
 import com.capstone.nongchown.Utils.showToast
-import com.capstone.nongchown.View.Activity.BaseActivity.BluetoothBaseActivity
 import com.capstone.nongchown.ViewModel.BluetoothViewModel
+import com.capstone.nongchown.databinding.ActivityBluetoothBinding
 import dagger.hilt.android.AndroidEntryPoint
-
-
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 
 @AndroidEntryPoint
-class BluetoothActivity : BluetoothBaseActivity() {
+class BluetoothActivity : AppCompatActivity(){
 
-    val bluetoothViewModel by viewModels<BluetoothViewModel>()   // Fragment KTX 적용
+    val bluetoothViewModel by viewModels<BluetoothViewModel>()
+    lateinit var binding: ActivityBluetoothBinding
+    lateinit var deviceAdapter: DeviceAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        setContentView(R.layout.activity_bluethooth)
-
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
-
         // 1차 권한 처리 ( 위치 정보, 블루투스 활성화 )
         requestBluetoothPermissions()
 
+        binding = ActivityBluetoothBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        setupRecyclerView()
+        showConnectSuccessMessage()
+
+        deviceAdapter.itemClick = object : DeviceAdapter.ItemClick {
+
+            override fun onClick(view: View, position: Int) {
+                // 1. 우선 실행중인 service 제거
+                val serviceIntent = Intent(this@BluetoothActivity, BluetoothService::class.java)
+                stopService(serviceIntent)
+
+                // 2. 연결
+                val device = deviceAdapter.getDeviceAtPosition(position)
+                bluetoothViewModel.connectToDevice(device)
+            }
+        }
+
+        val btnSendData: Button = findViewById(R.id.btnsenddata)
+        btnSendData.setOnClickListener {
+            bluetoothViewModel.sendDataToDevice()
+        }
+
         // 디바이스 연결 / 새 기기 추가
+        /**
+         * 1. 권한 check
+         *  BLUETOOTH_SCAN 허용 시 -> true
+         *  BLUETOOTH_SCAN 1번 거절 시 -> 재요청
+         *  BLUETOOTH_SCAN 2번 거절 시 -> 설정 page 이동
+         *
+         * 2. 블루투스 활성화 check
+         */
+
         val btnDeviceAdd: Button = findViewById(R.id.btndeviceadd)
         btnDeviceAdd.setOnClickListener {
-            /**
-             * 1. 권한 check
-             *  BLUETOOTH_SCAN 허용 시 -> true
-             *  BLUETOOTH_SCAN 1번 거절 시 -> 재요청
-             *  BLUETOOTH_SCAN 2번 거절 시 -> 설정 page 이동
-             */
 
-            /**
-             * 2. 블루투스 활성화 check
-             * */
             when (checkBluetoothState()) {
                 BluetoothState.ENABLED -> moveActivity(DeviceDiscoveryActivity::class.java)
                 BluetoothState.DISABLED -> {
@@ -71,6 +94,74 @@ class BluetoothActivity : BluetoothBaseActivity() {
 
                 else -> showToast("블루투스를 지원하지 않는 장비입니다.")
             }
+        }
+
+        val btnStopService: Button = findViewById(R.id.btnstopservice)
+        btnStopService.setOnClickListener {
+            val serviceIntent = Intent(this, BluetoothService::class.java)
+            stopService(serviceIntent)
+        }
+
+    }
+    override fun onResume() {
+        super.onResume()
+        bluetoothViewModel.getPairedDevices()
+    }
+
+    fun checkBluetoothState(): BluetoothState {
+
+        if (!bluetoothViewModel.isBluetoothSupport()) {
+            finish()
+            return BluetoothState.NOT_SUPPORT // NOT_SUPPORT
+        }
+
+        if (!bluetoothViewModel.isBluetoothEnabled()) {  //  비활성화 상태
+            Log.d("[로그]", "기기의 블루투스 비활성화 상태")
+            return BluetoothState.DISABLED // DISABLED
+        }
+
+        Log.d("[로그]", "기기의 블루투스 활성화 상태")
+        return BluetoothState.ENABLED      // ENABLED
+    }
+
+
+    private fun setupRecyclerView() {
+
+        deviceAdapter = DeviceAdapter(emptyList())
+        binding.paireddevice.apply {
+            adapter = deviceAdapter
+            layoutManager = LinearLayoutManager(this@BluetoothActivity)
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                bluetoothViewModel.pairedDevices.collect { devices->
+                    deviceAdapter.updateDevices(devices)
+                }
+            }
+        }
+    }
+
+    private fun showConnectSuccessMessage() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                bluetoothViewModel.connectionStatus.collect { isConnected ->
+                    if (isConnected) {
+                        showToast("연결되었습니다.")
+                        delay(1000)
+                        startBluetoothService()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun startBluetoothService() {
+        val serviceIntent = Intent(this, BluetoothService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent)
+        }else{
+            startService(serviceIntent)
         }
     }
 
@@ -156,23 +247,6 @@ class BluetoothActivity : BluetoothBaseActivity() {
 
     }
 
-
-    fun checkBluetoothState(): BluetoothState {
-
-        if (!isBluetoothSupport()) {
-            finish()
-            return BluetoothState.NOT_SUPPORT // NOT_SUPPORT
-        }
-
-        if (!isBluetoothEnabled()) {  //  비활성화 상태
-            Log.d("[로그]", "기기의 블루투스 비활성화 상태")
-            return BluetoothState.DISABLED // DISABLED
-        }
-
-        Log.d("[로그]", "기기의 블루투스 활성화 상태")
-        return BluetoothState.ENABLED      // ENABLED
-    }
-
     val startForResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
         if (result.resultCode == RESULT_OK) {
             Log.d("[로그]", "블루투스 활성화")
@@ -180,24 +254,5 @@ class BluetoothActivity : BluetoothBaseActivity() {
             Log.d("[로그]", "사용자 블루투스 활성화 거부")
         }
     }
-
-    fun isBluetoothSupport(): Boolean {
-        return if (bluetoothAdapter == null) {
-            Log.d("[로그]", "기기가 블루투스 지원하지 않습니다.")
-            false
-        } else {
-            Log.d("[로그]", "기기가 블루투스를 지원합니다.")
-            true
-        }
-    }
-
-    fun isBluetoothEnabled(): Boolean {
-        return if (bluetoothAdapter?.isEnabled == false) {   // 기기의 블루투스 비활성화 상태
-            false
-        } else {
-            true
-        }
-    }
-
 
 }

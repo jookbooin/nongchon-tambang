@@ -8,20 +8,18 @@
 
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-
-    <!-- SDK 31 이상을 타겟팅 하는 앱 Bluetooth 권한 (Android 12+) -->
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />  <!-- 블루투스 기기를 검색  -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" /> <!-- SDK 31 이상을 타겟팅 하는 앱 Bluetooth 권한 (Android 12+) -->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" /> <!-- 블루투스 기기를 검색 -->
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" /> <!-- 이미 페어링된 블루투스 기기와 통신 -->
     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" /> <!-- 현재 기기를 다른 블루투스 기기에서 검색 가능하도록 설정 -->
-
     <!-- SDK 30 이하를 타겟팅 하는 앱 Bluetooth 권한 -->
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /> <!-- 정밀 위치  -->
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /> <!-- 대략 위치  -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /> <!-- 정밀 위치 -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <uses-permission android:name="android.permission.SEND_SMS"/>
 
     <application
+        android:name=".NongchownApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -29,29 +27,27 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:name=".NongchownApplication"
         android:theme="@style/Theme.Nongchown"
         tools:targetApi="31">
+        <service
+            android:name=".Model.BluetoothService"
+            android:enabled="true"
+            android:exported="true"></service>
         <service
             android:name=".Model.ForegroundService"
             android:enabled="true"
             android:foregroundServiceType="mediaPlayback"
-            tools:ignore="ForegroundServicePermission">
+            tools:ignore="ForegroundServicePermission"></service>
 
-        </service>
         <activity
             android:name=".View.Activity.BaseActivity.BluetoothBaseActivity"
             android:exported="false" />
-
         <activity
             android:name=".View.Activity.UserProfileActivity"
             android:exported="false" />
-
         <activity
             android:name=".View.Activity.DeviceDiscoveryActivity"
             android:exported="false" />
-
-
         <activity
             android:name=".View.Activity.BluetoothActivity"
             android:exported="false" />

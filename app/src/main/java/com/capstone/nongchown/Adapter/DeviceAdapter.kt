@@ -9,7 +9,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.capstone.nongchown.databinding.DiscoveryDeviceListBinding
 
-class BluetoothAdapter(var deviceList: List<BluetoothDevice>) : RecyclerView.Adapter<BluetoothAdapter.Holder>() {
+class DeviceAdapter(var deviceList: List<BluetoothDevice>) : RecyclerView.Adapter<DeviceAdapter.Holder>() {
 
     /** interface 객체 생성 */
     var itemClick : ItemClick? = null
@@ -22,7 +22,7 @@ class BluetoothAdapter(var deviceList: List<BluetoothDevice>) : RecyclerView.Ada
      * viewHolder가 생성되는 함수
      * 여기서 반환한 뷰 홀더 객체는 자동으로 onBindViewHolder() 함수의 매개변수로 전달
      */
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BluetoothAdapter.Holder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DeviceAdapter.Holder {
         val binding = DiscoveryDeviceListBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return Holder(binding)
     }
@@ -32,7 +32,7 @@ class BluetoothAdapter(var deviceList: List<BluetoothDevice>) : RecyclerView.Ada
      * position은 아이템중 지금 아이템이 몇번째 아이템인지 알려줌
      * */
     @SuppressLint("MissingPermission")
-    override fun onBindViewHolder(holder: BluetoothAdapter.Holder, position: Int) {
+    override fun onBindViewHolder(holder: DeviceAdapter.Holder, position: Int) {
         /**
          * 클릭이벤트 - 클릭 리스너를 설정
          * 클릭 이벤트가 발생할 때 itemClick 콜백을 통해 외부로 이벤트를 전달
@@ -52,6 +52,12 @@ class BluetoothAdapter(var deviceList: List<BluetoothDevice>) : RecyclerView.Ada
     inner class Holder(binding: DiscoveryDeviceListBinding) : RecyclerView.ViewHolder(binding.root) {
         val name = binding.name
         val address = binding.address
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    fun updateDevices(newDevices: List<BluetoothDevice>) {
+        deviceList = newDevices
+        notifyDataSetChanged()
     }
 
     /** 클릭 이벤트를 위한 inf */
