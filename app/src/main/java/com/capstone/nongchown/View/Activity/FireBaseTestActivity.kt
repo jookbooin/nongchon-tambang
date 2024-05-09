@@ -13,12 +13,12 @@ class FireBaseTestActivity() : AppCompatActivity() {
     val db = Firebase.firestore
 
 
-    override fun onCreate(savedInstanceState: Bundle?){
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.firebase_test_layout)
 
         val btnAccident: Button = findViewById(R.id.find_user)
-        btnAccident.setOnClickListener{
+        btnAccident.setOnClickListener {
             val editText: EditText = findViewById(R.id.user_doc)
             val nameText: TextView = findViewById(R.id.user_name)
             val numberText: TextView = findViewById(R.id.user_number)
@@ -26,25 +26,20 @@ class FireBaseTestActivity() : AppCompatActivity() {
 
             val doc = db.collection("testData").document(docRefName)
             doc.get()
-                .addOnSuccessListener { document->
-                    if(document!=null){
+                .addOnSuccessListener { document ->
+                    if (document != null) {
                         val name = document.getString("name")
                         nameText.text = name
 
                         val number = document.getString("number")
                         numberText.text = number
-                    }
-                    else{
+                    } else {
                         nameText.text = "유효하지 않은 문서입니다"
                         numberText.text = "유효하지 않은 문서입니다"
                     }
-
                 }
 
         }
-
-
-
 
 
     }

@@ -82,7 +82,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="20dp"
                     android:text="김농촌"
-                    android:textSize="30dp"
+                    android:textSize="30sp"
                     android:textStyle="bold" />
 
                 <EditText
@@ -105,7 +105,7 @@
                     android:padding="20dp">
 
                     <EditText
-                        android:id="@+id/age"
+                        android:id="@+id/user_age"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
@@ -138,18 +138,7 @@
                     android:layout_height="wrap_content"
                     android:gravity="center_horizontal"
                     android:orientation="vertical">
-
-                    <EditText
-                        android:id="@+id/emergency_contact"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="20dp"
-                        android:layout_marginBottom="20dp"
-                        android:autofillHints="phone"
-                        android:background="@drawable/edittextstyle"
-                        android:hint="비상연락처"
-                        android:inputType="phone"
-                        android:padding="10dp" />
+                    
 
                     <Button
                         android:id="@+id/emergency_contact_addButton"

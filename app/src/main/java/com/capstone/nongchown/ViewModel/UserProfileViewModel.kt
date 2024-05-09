@@ -2,9 +2,10 @@ package com.capstone.nongchown.ViewModel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import com.capstone.nongchown.Model.UserInfo
 
 class UserProfileViewModel : ViewModel() {
-    fun loadStoredData(){
+    fun loadStoredData() {
 //        앱을 시작하면 데이터베이스에서 사용자 정보를 긁어오는 메소드
     }
 
@@ -17,7 +18,7 @@ class UserProfileViewModel : ViewModel() {
         }
     }
 
-    private fun validateAge(age:String):String{
+    private fun validateAge(age: String): String {
         val ageRegex = "^(?:150|[1-9]?[0-9])$".toRegex()
         if (ageRegex.matches(age)) {
             return age
@@ -67,26 +68,29 @@ class UserProfileViewModel : ViewModel() {
         age: String,
         gender: String,
         emergencyContactList: MutableList<String>
-    ) {
+    ): UserInfo {
         try {
-            val validEmail = validateEmail(email)
-            val validAge = validateAge(age)
-            val validEmergencyContacts = emergencyContactList.map { contact ->
-                validatePhone(contact)
+            val validName = name.trim()
+            val validEmail = validateEmail(email).trim()
+            val validAge = validateAge(age).trim()
+            val emergencyContacts = mutableListOf<String>()
+            emergencyContactList.forEach { contact ->
+                emergencyContacts.add(validatePhone(contact).trim())
             }
 
-            Log.d("[로그]", name)
+            Log.d("[로그]", validName)
             Log.d("[로그]", validEmail)
             Log.d("[로그]", validAge)
             Log.d("[로그]", gender)
-            validEmergencyContacts.forEach{
-                eContact -> Log.d("[로그]", eContact)
+            emergencyContactList.forEach { eContact ->
+                Log.d("[로그]", eContact)
             }
-//            값에 별 문제가 없으면 데이터베이스에 저장
+            return UserInfo(validName, validEmail, validAge, gender, emergencyContacts)
+
         } catch (e: IllegalArgumentException) {
             Log.d("[에러]", "${e.message}")
+            throw e
         }
-
     }
 
 
