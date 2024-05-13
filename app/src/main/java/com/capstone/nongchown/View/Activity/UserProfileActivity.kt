@@ -28,6 +28,12 @@ import androidx.core.view.children
 import androidx.core.widget.addTextChangedListener
 import androidx.core.widget.doOnTextChanged
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.capstone.nongchown.Adapter.DeviceAdapter
 import com.capstone.nongchown.Model.Enum.BluetoothState
 import com.capstone.nongchown.R
 import com.capstone.nongchown.Utils.moveActivity
@@ -36,11 +42,14 @@ import com.capstone.nongchown.ViewModel.BluetoothViewModel
 import com.capstone.nongchown.ViewModel.UserProfileViewModel
 import com.google.android.material.navigation.NavigationView
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
     val bluetoothViewModel by viewModels<BluetoothViewModel>()
+    lateinit var deviceAdapter: DeviceAdapter
+    lateinit var recyclerView: RecyclerView
 
     private lateinit var pageScroll: ScrollView
     private lateinit var drawerLayout: DrawerLayout
@@ -149,36 +158,9 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         }
 
         /** sideBar */
-        val drawerLayout = findViewById<DrawerLayout>(R.id.drawer_layout)
-
-        val toolbar = findViewById<Toolbar>(R.id.toolbar)
-        setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-
-        val navigationView = findViewById<NavigationView>(R.id.nav_view)
-        navigationView.setNavigationItemSelectedListener(this)
-
-        val toggle = ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.open_nav, R.string.close_nav)
-        drawerLayout.addDrawerListener(toggle)
-        toggle.syncState()
-
-        /** sideBar 내부 동작 */
-        toolbar.setNavigationOnClickListener {
-            checkBluetoothEnabledState { // 밑의 동작 람다식으로 넣음
-                drawerLayout.openDrawer(GravityCompat.START)
-                bluetoothViewModel.getPairedDevices()
-            }
-        }
-
-        /** 새 기기 추가*/
-        val navHeader = navigationView.getHeaderView(0)
-        val btnDeviceDiscovery = navHeader.findViewById<Button>(R.id.btndevicediscovery)
-        btnDeviceDiscovery.setOnClickListener {
-            checkBluetoothEnabledState {
-                drawerLayout.closeDrawer(GravityCompat.START)
-                moveActivity(DeviceDiscoveryActivity::class.java)
-            }
-        }
+        drawerLayout = findViewById<DrawerLayout>(R.id.drawer_layout)
+        clickAndOpenSideBar()
+        sideBarInnerAction()
 
     }
 
@@ -246,7 +228,8 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
 
     /** sideBar */
     override fun onNavigationItemSelected(item: MenuItem): Boolean { // X
-        when (item.itemId) {}
+        when (item.itemId) {
+        }
         return false
     }
 
@@ -255,6 +238,61 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
             Log.d("[로그]", "블루투스 활성화")
         } else if (result.resultCode == RESULT_CANCELED) {
             Log.d("[로그]", "사용자 블루투스 활성화 거부")
+        }
+    }
+
+    private fun clickAndOpenSideBar() {
+        val toolbar = findViewById<Toolbar>(R.id.toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+        val toggle = ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.open_nav, R.string.close_nav)
+        drawerLayout.addDrawerListener(toggle)
+        toggle.syncState()
+
+        toolbar.setNavigationOnClickListener {
+            checkBluetoothEnabledState { // 밑의 동작 람다식으로 넣음
+                drawerLayout.openDrawer(GravityCompat.START)
+                bluetoothViewModel.getPairedDevices()
+            }
+        }
+    }
+
+    private fun sideBarInnerAction() {
+        val navigationView = findViewById<NavigationView>(R.id.nav_view)
+        navigationView.setNavigationItemSelectedListener(this)
+        val navHeader = navigationView.getHeaderView(0)
+
+        /** 내부 동작 */
+        addNewDevices(navHeader)
+        pairedDevices(navHeader)
+    }
+
+    private fun addNewDevices(navHeader: View) {
+        val btnDeviceDiscovery = navHeader.findViewById<Button>(R.id.btndevicediscovery)
+        btnDeviceDiscovery.setOnClickListener {
+            checkBluetoothEnabledState {
+                drawerLayout.closeDrawer(GravityCompat.START)
+                moveActivity(DeviceDiscoveryActivity::class.java)
+            }
+        }
+    }
+
+    fun pairedDevices(navHeader: View) {
+        recyclerView = navHeader.findViewById(R.id.paireddevice);
+        deviceAdapter = DeviceAdapter(emptyList())
+
+        recyclerView.apply {
+            adapter = deviceAdapter
+            layoutManager = LinearLayoutManager(this@UserProfileActivity)
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                bluetoothViewModel.pairedDevices.collect { devices ->
+                    deviceAdapter.updateDevices(devices)
+                }
+            }
         }
     }
 
