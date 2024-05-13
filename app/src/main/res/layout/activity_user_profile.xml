@@ -176,6 +176,7 @@
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:background="#FFEB3B"
+        app:headerLayout="@layout/nav_header"
         />
 
 

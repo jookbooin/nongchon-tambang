@@ -30,6 +30,7 @@ import androidx.core.widget.doOnTextChanged
 import androidx.drawerlayout.widget.DrawerLayout
 import com.capstone.nongchown.Model.Enum.BluetoothState
 import com.capstone.nongchown.R
+import com.capstone.nongchown.Utils.moveActivity
 import com.capstone.nongchown.Utils.showToast
 import com.capstone.nongchown.ViewModel.BluetoothViewModel
 import com.capstone.nongchown.ViewModel.UserProfileViewModel
@@ -147,7 +148,7 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
             insets
         }
 
-        // sideMenu
+        /** sideBar */
         val drawerLayout = findViewById<DrawerLayout>(R.id.drawer_layout)
 
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
@@ -161,20 +162,21 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
 
+        /** sideBar 내부 동작 */
         toolbar.setNavigationOnClickListener {
-            when (checkBluetoothState()) {
-                BluetoothState.ENABLED -> {
-                    Log.d("[로그]", "블루투스 활성화 되어있습니다.")
-                    drawerLayout.openDrawer(GravityCompat.START)
-                }
+            checkBluetoothEnabledState { // 밑의 동작 람다식으로 넣음
+                drawerLayout.openDrawer(GravityCompat.START)
+                bluetoothViewModel.getPairedDevices()
+            }
+        }
 
-                BluetoothState.DISABLED -> {
-                    Log.d("[로그]", "블루투스 활성화 되어있지 않습니다.")
-                    val bluetoothIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-                    startForResult.launch(bluetoothIntent)
-                }
-
-                else -> showToast("블루투스를 지원하지 않는 장비입니다.")
+        /** 새 기기 추가*/
+        val navHeader = navigationView.getHeaderView(0)
+        val btnDeviceDiscovery = navHeader.findViewById<Button>(R.id.btndevicediscovery)
+        btnDeviceDiscovery.setOnClickListener {
+            checkBluetoothEnabledState {
+                drawerLayout.closeDrawer(GravityCompat.START)
+                moveActivity(DeviceDiscoveryActivity::class.java)
             }
         }
 
@@ -243,28 +245,9 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
     }
 
     /** sideBar */
-    override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-
-        }
+    override fun onNavigationItemSelected(item: MenuItem): Boolean { // X
+        when (item.itemId) {}
         return false
-    }
-
-    /** 블루투스 */
-    fun checkBluetoothState(): BluetoothState {
-
-        if (!bluetoothViewModel.isBluetoothSupport()) {
-            finish()
-            return BluetoothState.NOT_SUPPORT // NOT_SUPPORT
-        }
-
-        if (!bluetoothViewModel.isBluetoothEnabled()) {  //  비활성화 상태
-            Log.d("[로그]", "기기의 블루투스 비활성화 상태")
-            return BluetoothState.DISABLED // DISABLED
-        }
-
-        Log.d("[로그]", "기기의 블루투스 활성화 상태")
-        return BluetoothState.ENABLED      // ENABLED
     }
 
     val startForResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
@@ -275,6 +258,22 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         }
     }
 
+    /** 블루투스 활성화 상태 템플릿 */
+    fun checkBluetoothEnabledState(enabledAction: () -> Unit) {
+        when (bluetoothViewModel.checkBluetoothState()) {
+            BluetoothState.ENABLED -> {
+                enabledAction()
+            }
+
+            BluetoothState.DISABLED -> {
+                Log.d("[로그]", "블루투스 활성화 되어있지 않습니다.")
+                val bluetoothIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                startForResult.launch(bluetoothIntent)
+            }
+
+            else -> showToast("블루투스를 지원하지 않는 장비입니다.")
+        }
+    }
 
 }
 
