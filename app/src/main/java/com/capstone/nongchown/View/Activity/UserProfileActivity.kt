@@ -1,5 +1,7 @@
 package com.capstone.nongchown.View.Activity
 
+import android.bluetooth.BluetoothAdapter
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -13,6 +15,8 @@ import android.widget.ScrollView
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
@@ -24,11 +28,15 @@ import androidx.core.view.children
 import androidx.core.widget.addTextChangedListener
 import androidx.core.widget.doOnTextChanged
 import androidx.drawerlayout.widget.DrawerLayout
+import com.capstone.nongchown.Model.Enum.BluetoothState
 import com.capstone.nongchown.R
+import com.capstone.nongchown.Utils.showToast
 import com.capstone.nongchown.ViewModel.BluetoothViewModel
 import com.capstone.nongchown.ViewModel.UserProfileViewModel
 import com.google.android.material.navigation.NavigationView
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
     val bluetoothViewModel by viewModels<BluetoothViewModel>()
@@ -149,14 +157,27 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         val navigationView = findViewById<NavigationView>(R.id.nav_view)
         navigationView.setNavigationItemSelectedListener(this)
 
-        val toggle = ActionBarDrawerToggle(this, drawerLayout, toolbar,R.string.open_nav,R.string.close_nav)
+        val toggle = ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.open_nav, R.string.close_nav)
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
 
-        toolbar.setNavigationOnClickListener{
-            Log.d("[로그]","눌렀다.")
-            drawerLayout.openDrawer(GravityCompat.START)
+        toolbar.setNavigationOnClickListener {
+            when (checkBluetoothState()) {
+                BluetoothState.ENABLED -> {
+                    Log.d("[로그]", "블루투스 활성화 되어있습니다.")
+                    drawerLayout.openDrawer(GravityCompat.START)
+                }
+
+                BluetoothState.DISABLED -> {
+                    Log.d("[로그]", "블루투스 활성화 되어있지 않습니다.")
+                    val bluetoothIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                    startForResult.launch(bluetoothIntent)
+                }
+
+                else -> showToast("블루투스를 지원하지 않는 장비입니다.")
+            }
         }
+
     }
 
     private fun initUserInfo(
@@ -221,19 +242,36 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         }
     }
 
+    /** sideBar */
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        when(item.itemId){
+        when (item.itemId) {
 
         }
         return false
     }
 
-    override fun onBackPressed(){
+    /** 블루투스 */
+    fun checkBluetoothState(): BluetoothState {
 
-        if(drawerLayout.isDrawerOpen(GravityCompat.START)){ // 열려있다면
-            drawerLayout.closeDrawer(GravityCompat.START)   // 닫는다.
-        }else{
-            super.onBackPressed()
+        if (!bluetoothViewModel.isBluetoothSupport()) {
+            finish()
+            return BluetoothState.NOT_SUPPORT // NOT_SUPPORT
+        }
+
+        if (!bluetoothViewModel.isBluetoothEnabled()) {  //  비활성화 상태
+            Log.d("[로그]", "기기의 블루투스 비활성화 상태")
+            return BluetoothState.DISABLED // DISABLED
+        }
+
+        Log.d("[로그]", "기기의 블루투스 활성화 상태")
+        return BluetoothState.ENABLED      // ENABLED
+    }
+
+    val startForResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+        if (result.resultCode == RESULT_OK) {
+            Log.d("[로그]", "블루투스 활성화")
+        } else if (result.resultCode == RESULT_CANCELED) {
+            Log.d("[로그]", "사용자 블루투스 활성화 거부")
         }
     }
 
