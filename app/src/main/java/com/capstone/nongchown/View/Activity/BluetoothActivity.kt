@@ -77,7 +77,7 @@ class BluetoothActivity : AppCompatActivity(){
          * 2. 블루투스 활성화 check
          */
 
-        val btnDeviceAdd: Button = findViewById(R.id.btndeviceadd)
+        val btnDeviceAdd: Button = findViewById(R.id.btndevicediscovery)
         btnDeviceAdd.setOnClickListener {
 
             when (checkBluetoothState()) {
