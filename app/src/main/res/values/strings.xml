@@ -1,5 +1,9 @@
 <resources>
     <string name="app_name">nongchown</string>
+    <string-array name="gender_options">
+        <item>남</item>
+        <item>여</item>
+    </string-array>
     <string name="send_data">send data</string>
     <string name="button">Button</string>
 </resources>

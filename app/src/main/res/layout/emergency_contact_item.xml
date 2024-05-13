@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<EditText xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/emergency_contact"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="20dp"
+    android:layout_marginBottom="20dp"
+    android:autofillHints="phone"
+    android:background="@drawable/edittextstyle"
+    android:hint="비상연락처"
+    android:inputType="phone"
+    android:padding="10dp" />
+
+

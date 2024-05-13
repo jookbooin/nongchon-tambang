@@ -51,6 +51,8 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.circleimageview)
     implementation(libs.androidx.fragment.ktx)
+    implementation(libs.firebase.common.ktx)
+    implementation(libs.firebase.database.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -58,7 +60,7 @@ dependencies {
     kapt(libs.hilt.android.compiler)
     implementation(libs.firebase.firestore.ktx)
     // Import the Firebase BoM
-    implementation(platform("com.google.firebase:firebase-bom:32.8.1"))
+    implementation(platform("com.google.firebase:firebase-bom:33.0.0"))
     // TODO: Add the dependencies for Firebase products you want to use
     // When using the BoM, don't specify versions in Firebase dependencies
     implementation("com.google.firebase:firebase-analytics")
