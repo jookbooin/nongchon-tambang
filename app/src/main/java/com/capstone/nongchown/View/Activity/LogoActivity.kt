@@ -47,6 +47,7 @@ class LogoActivity : ComponentActivity() {
                 requestPermissions(Constants.PERMISSIONS_S, Constants.PERMISSION_REQUEST_CODE_S)
             } else {
                 Log.d("[로그]", "모든 권한이 허용되어 있다.")
+                moveMainActivity()
             }
         } else {
             Log.d("[로그]", "Build.VERSION.SDK_INT < Build.VERSION_CODES.S")
@@ -55,6 +56,7 @@ class LogoActivity : ComponentActivity() {
                 requestPermissions(Constants.PERMISSIONS, Constants.PERMISSION_REQUEST_CODE)
             } else {
                 Log.d("[로그]", "모든 권한이 허용되어 있다.")
+                moveMainActivity()
             }
         }
     }
@@ -71,6 +73,7 @@ class LogoActivity : ComponentActivity() {
                 if (grantResults.isNotEmpty() && isPermissionGranted(grantResults)) {
                     Log.d("[로그]", "모든 권한을 허용하였습니다.")
                     showToast("모든 권한을 허용하였습니다.")
+
                 } else {
                     // 위치 권한
                     if (grantResults[2] == PackageManager.PERMISSION_GRANTED) {
@@ -91,14 +94,14 @@ class LogoActivity : ComponentActivity() {
                     }
 
                 }
+
+
             }
 
             Constants.PERMISSION_REQUEST_CODE -> {}
         }
 
-        val intent = Intent(this, MainActivity::class.java)
-        startActivity(intent)
-        finish()
+        moveMainActivity()
     }
 
     /** 런타임 권한 모두 check 되었는지 확인 */
@@ -111,7 +114,14 @@ class LogoActivity : ComponentActivity() {
         return true
     }
 
+    fun moveMainActivity(){
+        val intent = Intent(this, MainActivity::class.java)
+        startActivity(intent)
+        finish()
+    }
 }
+
+
 
 //val snackBar = Snackbar.make(findViewById(android.R.id.content), "앱을 실행하려면 블루투스 권한을 허용해야 합니다.", Snackbar.LENGTH_LONG)
 //    .setAction("확인") {

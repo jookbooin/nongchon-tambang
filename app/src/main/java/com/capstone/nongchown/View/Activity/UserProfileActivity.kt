@@ -1,9 +1,9 @@
 package com.capstone.nongchown.View.Activity
 
 import android.os.Bundle
-import android.provider.ContactsContract.CommonDataKinds.Email
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.MenuItem
 import android.view.View
 import android.widget.AdapterView
 import android.widget.Button
@@ -13,19 +13,28 @@ import android.widget.ScrollView
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
+import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
+import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.children
 import androidx.core.widget.addTextChangedListener
 import androidx.core.widget.doOnTextChanged
-import com.capstone.nongchown.Model.UserInfo
+import androidx.drawerlayout.widget.DrawerLayout
 import com.capstone.nongchown.R
+import com.capstone.nongchown.ViewModel.BluetoothViewModel
 import com.capstone.nongchown.ViewModel.UserProfileViewModel
+import com.google.android.material.navigation.NavigationView
 
-class UserProfileActivity : AppCompatActivity() {
+class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
+
+    val bluetoothViewModel by viewModels<BluetoothViewModel>()
 
     private lateinit var pageScroll: ScrollView
+    private lateinit var drawerLayout: DrawerLayout
 
     private lateinit var name: String
     private lateinit var email: String
@@ -129,6 +138,25 @@ class UserProfileActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        // sideMenu
+        val drawerLayout = findViewById<DrawerLayout>(R.id.drawer_layout)
+
+        val toolbar = findViewById<Toolbar>(R.id.toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+        val navigationView = findViewById<NavigationView>(R.id.nav_view)
+        navigationView.setNavigationItemSelectedListener(this)
+
+        val toggle = ActionBarDrawerToggle(this, drawerLayout, toolbar,R.string.open_nav,R.string.close_nav)
+        drawerLayout.addDrawerListener(toggle)
+        toggle.syncState()
+
+        toolbar.setNavigationOnClickListener{
+            Log.d("[로그]","눌렀다.")
+            drawerLayout.openDrawer(GravityCompat.START)
+        }
     }
 
     private fun initUserInfo(
@@ -192,6 +220,24 @@ class UserProfileActivity : AppCompatActivity() {
             }
         }
     }
+
+    override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        when(item.itemId){
+
+        }
+        return false
+    }
+
+    override fun onBackPressed(){
+
+        if(drawerLayout.isDrawerOpen(GravityCompat.START)){ // 열려있다면
+            drawerLayout.closeDrawer(GravityCompat.START)   // 닫는다.
+        }else{
+            super.onBackPressed()
+        }
+    }
+
+
 }
 
 
