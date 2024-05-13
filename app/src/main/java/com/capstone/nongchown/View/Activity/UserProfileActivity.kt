@@ -33,7 +33,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.capstone.nongchown.Adapter.DeviceAdapter
+import com.capstone.nongchown.Adapter.ConnectedDeviceAdapter
 import com.capstone.nongchown.Model.Enum.BluetoothState
 import com.capstone.nongchown.R
 import com.capstone.nongchown.Utils.moveActivity
@@ -48,7 +48,7 @@ import kotlinx.coroutines.launch
 class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
     val bluetoothViewModel by viewModels<BluetoothViewModel>()
-    lateinit var deviceAdapter: DeviceAdapter
+    lateinit var connectedDeviceAdapter: ConnectedDeviceAdapter
     lateinit var recyclerView: RecyclerView
 
     private lateinit var pageScroll: ScrollView
@@ -266,6 +266,24 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         /** 내부 동작 */
         addNewDevices(navHeader)
         pairedDevices(navHeader)
+        connectDevice()
+    }
+
+    private fun connectDevice() {
+        connectedDeviceAdapter.itemClick = object : ConnectedDeviceAdapter.ItemClick {
+
+            override fun onClick(view: View, position: Int) {
+                checkBluetoothEnabledState{
+                    // 1. 우선 실행중인 service 제거
+//                    val serviceIntent = Intent(this@UserProfileActivity, BluetoothService::class.java)
+//                    stopService(serviceIntent)
+//
+//                    // 2. 연결
+//                    val device = connectDeviceAdapter.getDeviceAtPosition(position)
+//                    bluetoothViewModel.connectToDevice(device)
+                }
+            }
+        }
     }
 
     private fun addNewDevices(navHeader: View) {
@@ -280,17 +298,17 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
 
     fun pairedDevices(navHeader: View) {
         recyclerView = navHeader.findViewById(R.id.paireddevice);
-        deviceAdapter = DeviceAdapter(emptyList())
+        connectedDeviceAdapter = ConnectedDeviceAdapter(emptyList())
 
         recyclerView.apply {
-            adapter = deviceAdapter
+            adapter = connectedDeviceAdapter
             layoutManager = LinearLayoutManager(this@UserProfileActivity)
         }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 bluetoothViewModel.pairedDevices.collect { devices ->
-                    deviceAdapter.updateDevices(devices)
+                    connectedDeviceAdapter.updateDevices(devices)
                 }
             }
         }
