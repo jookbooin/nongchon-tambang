@@ -10,11 +10,8 @@ import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.ComponentActivity
-
 import androidx.activity.viewModels
-import androidx.lifecycle.Observer
 import com.capstone.nongchown.Model.ForegroundService
-
 import com.capstone.nongchown.R
 import com.capstone.nongchown.ViewModel.AccidentViewModel
 
@@ -53,22 +50,23 @@ class AccidentActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        foregroundService?.getTimerCount()?.observe(this) { count ->
+            updateTimerText(count)
+        }
 
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         instance = this
-        Intent(this, ForegroundService::class.java).also { intent ->
-            bindService(intent, connection, Context.BIND_AUTO_CREATE)
-        }
+        val serviceIntent=Intent(this, ForegroundService::class.java)
+        bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE)
+
         Log.d("test", "accident")
         setContentView(R.layout.accident_notification)
 
+        //foregroundService.
 
-        accidentViewModel.getTimerCount().observe(this, Observer{ count ->
-            updateTimerText(count)
-        })
 
         val intent = intent
         countData = intent?.getIntExtra("timer", 0)!!
