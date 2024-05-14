@@ -84,7 +84,7 @@ class AccidentActivity : ComponentActivity() {
             //accidentViewModel.userSafe()
             foregroundService?.userSafe()
             
-            val mainIntent = Intent(this, MainActivity::class.java)
+            val mainIntent = Intent(this, UserProfileActivity::class.java)
             startActivity(mainIntent)
 
         }
