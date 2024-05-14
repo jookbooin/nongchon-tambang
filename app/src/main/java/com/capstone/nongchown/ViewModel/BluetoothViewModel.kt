@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothDevice
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.capstone.nongchown.Model.Enum.BluetoothState
 import com.capstone.nongchown.Repository.BluetoothRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +25,7 @@ class BluetoothViewModel @Inject constructor(private val bluetoothRepository: Bl
     private val _connectionStatus = MutableStateFlow(false) // 기본값으로 false
     val connectionStatus: StateFlow<Boolean> = _connectionStatus.asStateFlow()
 
-    val _pairedDevices= MutableStateFlow<List<BluetoothDevice>>(emptyList())
+    val _pairedDevices = MutableStateFlow<List<BluetoothDevice>>(emptyList())
     val pairedDevices: StateFlow<List<BluetoothDevice>> = _pairedDevices
 
     fun loadingDiscovery() {
@@ -75,13 +76,29 @@ class BluetoothViewModel @Inject constructor(private val bluetoothRepository: Bl
         }
     }
 
-    fun isBluetoothEnabled(): Boolean{
+    fun isBluetoothEnabled(): Boolean {
         return bluetoothRepository.isBluetoothEnabled()
     }
 
-    fun isBluetoothSupport(): Boolean{
+    fun isBluetoothSupport(): Boolean {
         return bluetoothRepository.isBluetoothSupport()
     }
+
+    fun checkBluetoothState(): BluetoothState {
+
+        if (!isBluetoothSupport()) {
+            return BluetoothState.NOT_SUPPORT // NOT_SUPPORT
+        }
+
+        if (!isBluetoothEnabled()) {  //  비활성화 상태
+            Log.d("[로그]", "기기의 블루투스 비활성화 상태")
+            return BluetoothState.DISABLED // DISABLED
+        }
+
+        Log.d("[로그]", "기기의 블루투스 활성화 상태")
+        return BluetoothState.ENABLED      // ENABLED
+    }
+
 
 
 
