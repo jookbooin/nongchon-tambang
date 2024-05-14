@@ -2,11 +2,22 @@ package com.capstone.nongchown.ViewModel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import com.capstone.nongchown.Model.FirebaseCommunication
 import com.capstone.nongchown.Model.UserInfo
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 
 class UserProfileViewModel : ViewModel() {
-    fun loadStoredData() {
-//        앱을 시작하면 데이터베이스에서 사용자 정보를 긁어오는 메소드
+    private val firebaseComm = FirebaseCommunication()
+
+    suspend fun loadStoredData(email: String): UserInfo = suspendCancellableCoroutine { cont ->
+        firebaseComm.fetchUserByDocumentId(email) { user ->
+            if (user != null) {
+                cont.resume(user)
+            } else {
+                cont.resume(UserInfo())
+            }
+        }
     }
 
     private fun validateEmail(email: String): String {
@@ -37,8 +48,10 @@ class UserProfileViewModel : ViewModel() {
         val phoneRegexWithoutHyphen = "^\\d{10,11}$".toRegex()
 
         if (phoneRegexWithHyphen.matches(cleanNumber)) {
+            Log.d("[로그]", "clean number: $number")
             return cleanNumber  // 이미 유효한 형식
         } else if (phoneRegexWithoutHyphen.matches(digitsOnly)) {
+            Log.d("[로그]", "digit only number: $number")
             // 하이픈이 없는 경우에는 적절한 위치에 하이픈 추가
             return when (digitsOnly.length) {
                 10 -> "${digitsOnly.substring(0, 3)}-${
@@ -73,7 +86,9 @@ class UserProfileViewModel : ViewModel() {
             val validName = name.trim()
             val validEmail = validateEmail(email).trim()
             val validAge = validateAge(age).trim()
+            val validGender = gender.trim()
             val emergencyContacts = mutableListOf<String>()
+
             emergencyContactList.forEach { contact ->
                 emergencyContacts.add(validatePhone(contact).trim())
             }
@@ -81,11 +96,12 @@ class UserProfileViewModel : ViewModel() {
             Log.d("[로그]", validName)
             Log.d("[로그]", validEmail)
             Log.d("[로그]", validAge)
-            Log.d("[로그]", gender)
+            Log.d("[로그]", validGender)
             emergencyContactList.forEach { eContact ->
                 Log.d("[로그]", eContact)
             }
-            return UserInfo(validName, validEmail, validAge, gender, emergencyContacts)
+
+            return UserInfo(validName, validEmail, validAge, validGender, emergencyContacts)
 
         } catch (e: IllegalArgumentException) {
             Log.d("[에러]", "${e.message}")

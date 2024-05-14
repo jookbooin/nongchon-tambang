@@ -1,11 +1,11 @@
 package com.capstone.nongchown.View.Activity
 
+import android.annotation.SuppressLint
 import android.os.Bundle
-import android.provider.ContactsContract.CommonDataKinds.Email
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
-import android.widget.AdapterView
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -18,21 +18,27 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.children
 import androidx.core.widget.addTextChangedListener
-import androidx.core.widget.doOnTextChanged
-import com.capstone.nongchown.Model.UserInfo
+import androidx.lifecycle.lifecycleScope
 import com.capstone.nongchown.R
 import com.capstone.nongchown.ViewModel.UserProfileViewModel
+import kotlinx.coroutines.launch
 
 class UserProfileActivity : AppCompatActivity() {
-
+    private val userprofileViewModel = UserProfileViewModel()
     private lateinit var pageScroll: ScrollView
 
     private lateinit var name: String
     private lateinit var email: String
     private lateinit var age: String
     private lateinit var gender: String
-
     private val emergencyContactList = mutableListOf<String>()
+
+    private val emergencyAddButton: Button by lazy {
+        findViewById(R.id.emergency_contact_addButton)
+    }
+    private val saveButton: Button by lazy {
+        findViewById(R.id.user_profile_saveButton)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,8 +46,6 @@ class UserProfileActivity : AppCompatActivity() {
         setContentView(R.layout.activity_user_profile)
 
         pageScroll = findViewById(R.id.user_profile_scroll)
-        val emergencyAddButton = findViewById<Button>(R.id.emergency_contact_addButton)
-        val saveButton = findViewById<Button>(R.id.user_profile_saveButton)
 
         val userName = findViewById<EditText>(R.id.user_name)
         userName.addTextChangedListener {
@@ -62,31 +66,25 @@ class UserProfileActivity : AppCompatActivity() {
         }
 
         val userGender = findViewById<Spinner>(R.id.gender)
-        userGender.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(
-                parent: AdapterView<*>,
-                view: View?,
-                position: Int,
-                id: Long
-            ) {
-                if (userGender.selectedItem.toString() != gender) {
-                    saveButton.isEnabled = true
-                }
-                Log.d("[로그]", "gender changed")
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>) {
-                // Do nothing
-            }
-        }
+//        userGender.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+//            override fun onItemSelected(
+//                parent: AdapterView<*>,
+//                view: View?,
+//                position: Int,
+//                id: Long
+//            ) {
+//                if (userGender.selectedItem.toString() != gender) {
+//                    saveButton.isEnabled = true
+//                }
+//                Log.d("[로그]", "gender changed")
+//            }
+//
+//            override fun onNothingSelected(parent: AdapterView<*>) {
+//                // Do nothing
+//            }
+//        }
 
         val emergencyContacts = findViewById<LinearLayout>(R.id.emergency_contact_list)
-        emergencyContacts.children.filterIsInstance<EditText>().forEach { emergencyContact ->
-            emergencyContact.addTextChangedListener {
-                Log.d("[로그]", "eContact added")
-                saveButton.isEnabled = true
-            }
-        }
 
         emergencyAddButton.setOnClickListener {
             addEmergencyContact(emergencyContacts)
@@ -94,22 +92,27 @@ class UserProfileActivity : AppCompatActivity() {
 
         saveButton.setOnClickListener {
             try {
+                Log.d("[로그]", "저장 버튼 클릭")
                 emergencyContacts.children.filterIsInstance<EditText>()
                     .forEach { emergencyContact ->
+                        Log.d("[로그]", "emergencyContact: ${emergencyContact.text}")
                         emergencyContactList.add(emergencyContact.text.toString())
                     }
-                Log.d("[로그]", "저장 버튼 클릭")
-                val userinfo = UserProfileViewModel().userProfileSave(
+                val userInfo = UserProfileViewModel().userProfileSave(
                     userName.text.toString(),
                     userEmail.text.toString(),
                     userAge.text.toString(),
                     userGender.selectedItem.toString(),
                     emergencyContactList
                 )
-                this.name = userinfo.name
-                this.email = userinfo.email
-                this.age = userinfo.age
-                this.gender = userinfo.gender
+                this.name = userInfo.name
+                this.email = userInfo.email
+                this.age = userInfo.age
+                this.gender = userInfo.gender
+                this.emergencyContactList.clear()
+                this.emergencyContactList.addAll(userInfo.emergencyContactList)
+
+                saveButton.isEnabled = false
             } catch (e: IllegalArgumentException) {
                 Toast.makeText(this, "입력 오류: ${e.message}", Toast.LENGTH_LONG).show()
             }
@@ -141,57 +144,73 @@ class UserProfileActivity : AppCompatActivity() {
 
         Log.d("[로그]", "initializing")
 
-        name = "김농촌"
         email = "sanghoo1023@gmail.com"
-        age = "23"
-        gender = "여"
-        emergencyContactList.add("010-5341-3270")
 
-        userName.setText(name)
-        userEmail.setText(email)
-        userAge.setText(age)
-        userGender.setSelection((if (gender == "남") 0 else 1))
+        lifecycleScope.launch {
+            val userInfo = userprofileViewModel.loadStoredData(email)
 
-
-        for (i: Int in 0..<emergencyContactList.size) {
-            addEmergencyContact(emergencyContacts)
-            Log.d("[로그]", "addEmergencyContact(emergencyContacts)")
-            val eContact = emergencyContacts.getChildAt(i)
-            if (eContact is EditText) {
-                eContact.setText(emergencyContactList[i])
-            } else {
-                Log.d("[에러]", "비상 연락망 위젯 개수 오류")
+            userName.setText(userInfo.name)
+            userEmail.setText(userInfo.email)
+            userAge.setText(userInfo.age)
+            userGender.setSelection((if (userInfo.gender == "남") 0 else 1))
+            for (i: Int in 0..<userInfo.emergencyContactList.size) {
+                addEmergencyContact(emergencyContacts)
+                Log.d("[로그]", "addEmergencyContact(emergencyContacts)")
+                val eContact = emergencyContacts.getChildAt(i)
+                if (eContact is EditText) {
+                    eContact.setText(userInfo.emergencyContactList[i])
+                } else {
+                    Log.d("[에러]", "비상 연락망 위젯 개수 오류")
+                }
             }
         }
+
+
         Log.d("[로그]", "initializing complete")
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private fun addEmergencyContact(emergencyContacts: LinearLayout) {
         val inflater = LayoutInflater.from(this)
-        val eContact = inflater.inflate(R.layout.emergency_contact_item, emergencyContacts, false)
-        setupFocusListener(eContact as EditText)
+        val eContact =
+            inflater.inflate(R.layout.emergency_contact_item, emergencyContacts, false) as EditText
+        eContact.addTextChangedListener {
+            Log.d("[로그]", "emergencyContact changed")
+            saveButton.isEnabled = true
+
+            eContact.setOnTouchListener { v, event ->
+                if (event.action == MotionEvent.ACTION_UP) {
+                    val clearDrawable = eContact.compoundDrawablesRelative[2]
+                    if (clearDrawable != null && event.rawX >= (eContact.right - clearDrawable.bounds.width())) {
+                        eContact.setText("")
+                        return@setOnTouchListener true
+                    }
+                }
+                false
+            }
+        }
         emergencyContacts.addView(eContact, emergencyContacts.childCount - 1)
     }
 
     //    form 입력 시 해당 form 으로 스크롤 이동
-    private fun setupFocusListener(editText: EditText) {
-        editText.setOnFocusChangeListener { v, hasFocus ->
-            if (hasFocus) {
-                pageScroll.post {
-                    pageScroll.scrollTo(0, v.top)
-                }
-            }
-        }
-
-        // Optional: Adjusting scroll when text changes
-        editText.doOnTextChanged { _, _, _, _ ->
-            if (editText.hasFocus()) {
-                pageScroll.post {
-                    pageScroll.scrollTo(0, editText.top)
-                }
-            }
-        }
-    }
+//    private fun setupFocusListener(editText: EditText) {
+//        editText.setOnFocusChangeListener { v, hasFocus ->
+//            if (hasFocus) {
+//                pageScroll.post {
+//                    pageScroll.scrollTo(0, v.top)
+//                }
+//            }
+//        }
+//
+//        // Optional: Adjusting scroll when text changes
+//        editText.doOnTextChanged { _, _, _, _ ->
+//            if (editText.hasFocus()) {
+//                pageScroll.post {
+//                    pageScroll.scrollTo(0, editText.top)
+//                }
+//            }
+//        }
+//    }
 }
 
 
