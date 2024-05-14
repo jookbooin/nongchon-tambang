@@ -115,7 +115,7 @@ class LogoActivity : ComponentActivity() {
     }
 
     fun moveMainActivity(){
-        val intent = Intent(this, MainActivity::class.java)
+        val intent = Intent(this, UserProfileActivity::class.java)
         startActivity(intent)
         finish()
     }

@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.capstone.nongchown.Adapter.DeviceAdapter
 import com.capstone.nongchown.Model.BluetoothService
 import com.capstone.nongchown.Model.Enum.BluetoothState
+import com.capstone.nongchown.Model.ForegroundService
 import com.capstone.nongchown.R
 import com.capstone.nongchown.Utils.moveActivity
 import com.capstone.nongchown.Utils.showToast
@@ -152,7 +153,7 @@ class BluetoothActivity : AppCompatActivity(){
     }
 
     private fun startBluetoothService() {
-        val serviceIntent = Intent(this, BluetoothService::class.java)
+        val serviceIntent = Intent(this, ForegroundService::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(serviceIntent)
         }else{

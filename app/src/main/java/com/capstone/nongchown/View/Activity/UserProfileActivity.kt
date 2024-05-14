@@ -2,6 +2,7 @@ package com.capstone.nongchown.View.Activity
 
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -35,6 +36,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.capstone.nongchown.Adapter.ConnectedDeviceAdapter
 import com.capstone.nongchown.Model.Enum.BluetoothState
+import com.capstone.nongchown.Model.ForegroundService
 import com.capstone.nongchown.R
 import com.capstone.nongchown.Utils.moveActivity
 import com.capstone.nongchown.Utils.showToast
@@ -42,6 +44,7 @@ import com.capstone.nongchown.ViewModel.BluetoothViewModel
 import com.capstone.nongchown.ViewModel.UserProfileViewModel
 import com.google.android.material.navigation.NavigationView
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -267,6 +270,7 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         addNewDevices(navHeader)
         pairedDevices(navHeader)
         connectDevice()
+        showConnectSuccessMessage()
     }
 
     private fun connectDevice() {
@@ -275,12 +279,12 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
             override fun onClick(view: View, position: Int) {
                 checkBluetoothEnabledState{
                     // 1. 우선 실행중인 service 제거
-//                    val serviceIntent = Intent(this@UserProfileActivity, BluetoothService::class.java)
-//                    stopService(serviceIntent)
-//
-//                    // 2. 연결
-//                    val device = connectDeviceAdapter.getDeviceAtPosition(position)
-//                    bluetoothViewModel.connectToDevice(device)
+                    val serviceIntent = Intent(this@UserProfileActivity, ForegroundService::class.java)
+                    stopService(serviceIntent)
+
+                    // 2. 연결
+                    val device = connectedDeviceAdapter.getDeviceAtPosition(position)
+                    bluetoothViewModel.connectToDevice(device)
                 }
             }
         }
@@ -328,6 +332,29 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
             }
 
             else -> showToast("블루투스를 지원하지 않는 장비입니다.")
+        }
+    }
+
+    private fun showConnectSuccessMessage() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                bluetoothViewModel.connectionStatus.collect { isConnected ->
+                    if (isConnected) {
+                        showToast("연결되었습니다.")
+                        delay(1000)
+                        startBluetoothService()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun startBluetoothService() {
+        val serviceIntent = Intent(this, ForegroundService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent)
+        }else{
+            startService(serviceIntent)
         }
     }
 
