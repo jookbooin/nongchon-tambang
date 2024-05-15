@@ -5,6 +5,12 @@ import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
+
+import android.bluetooth.BluetoothAdapter
+import android.content.Intent
+import android.os.Build
+import android.view.MenuItem
+
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -13,19 +19,53 @@ import android.widget.ScrollView
 import android.widget.Spinner
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
+import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
+import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.children
 import androidx.core.widget.addTextChangedListener
+
 import androidx.lifecycle.lifecycleScope
+import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.Lifecycle
+
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.capstone.nongchown.Adapter.ConnectedDeviceAdapter
+import com.capstone.nongchown.Model.Enum.BluetoothState
+import com.capstone.nongchown.Model.ForegroundService
+
 import com.capstone.nongchown.R
+import com.capstone.nongchown.Utils.moveActivity
+import com.capstone.nongchown.Utils.showToast
+import com.capstone.nongchown.ViewModel.BluetoothViewModel
 import com.capstone.nongchown.ViewModel.UserProfileViewModel
+
 import kotlinx.coroutines.launch
 
-class UserProfileActivity : AppCompatActivity() {
+
+import com.google.android.material.navigation.NavigationView
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
+
+@AndroidEntryPoint
+class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
+
+    val bluetoothViewModel by viewModels<BluetoothViewModel>()
+    lateinit var connectedDeviceAdapter: ConnectedDeviceAdapter
+    lateinit var recyclerView: RecyclerView
+
     private val userprofileViewModel = UserProfileViewModel()
+
     private lateinit var pageScroll: ScrollView
+    private lateinit var drawerLayout: DrawerLayout
 
     private lateinit var name: String
     private lateinit var email: String
@@ -132,6 +172,12 @@ class UserProfileActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+        /** sideBar */
+        drawerLayout = findViewById<DrawerLayout>(R.id.drawer_layout)
+        clickAndOpenSideBar()
+        sideBarInnerAction()
+
     }
 
     private fun initUserInfo(
@@ -192,25 +238,144 @@ class UserProfileActivity : AppCompatActivity() {
         emergencyContacts.addView(eContact, emergencyContacts.childCount - 1)
     }
 
-    //    form 입력 시 해당 form 으로 스크롤 이동
-//    private fun setupFocusListener(editText: EditText) {
-//        editText.setOnFocusChangeListener { v, hasFocus ->
-//            if (hasFocus) {
-//                pageScroll.post {
-//                    pageScroll.scrollTo(0, v.top)
-//                }
-//            }
-//        }
-//
-//        // Optional: Adjusting scroll when text changes
-//        editText.doOnTextChanged { _, _, _, _ ->
-//            if (editText.hasFocus()) {
-//                pageScroll.post {
-//                    pageScroll.scrollTo(0, editText.top)
-//                }
-//            }
-//        }
-//    }
+
+    /** sideBar */
+    override fun onNavigationItemSelected(item: MenuItem): Boolean { // X
+        when (item.itemId) {
+        }
+        return false
+    }
+
+    val startForResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+            if (result.resultCode == RESULT_OK) {
+                Log.d("[로그]", "블루투스 활성화")
+            } else if (result.resultCode == RESULT_CANCELED) {
+                Log.d("[로그]", "사용자 블루투스 활성화 거부")
+            }
+        }
+
+    private fun clickAndOpenSideBar() {
+        val toolbar = findViewById<Toolbar>(R.id.toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+        val toggle = ActionBarDrawerToggle(
+            this,
+            drawerLayout,
+            toolbar,
+            R.string.open_nav,
+            R.string.close_nav
+        )
+        drawerLayout.addDrawerListener(toggle)
+        toggle.syncState()
+
+        toolbar.setNavigationOnClickListener {
+            checkBluetoothEnabledState { // 밑의 동작 람다식으로 넣음
+                drawerLayout.openDrawer(GravityCompat.START)
+                bluetoothViewModel.getPairedDevices()
+            }
+        }
+    }
+
+    private fun sideBarInnerAction() {
+        val navigationView = findViewById<NavigationView>(R.id.nav_view)
+        navigationView.setNavigationItemSelectedListener(this)
+        val navHeader = navigationView.getHeaderView(0)
+
+        /** 내부 동작 */
+        addNewDevices(navHeader)
+        pairedDevices(navHeader)
+        connectDevice()
+        showConnectSuccessMessage()
+    }
+
+    private fun connectDevice() {
+        connectedDeviceAdapter.itemClick = object : ConnectedDeviceAdapter.ItemClick {
+
+            override fun onClick(view: View, position: Int) {
+                checkBluetoothEnabledState {
+                    // 1. 우선 실행중인 service 제거
+                    val serviceIntent =
+                        Intent(this@UserProfileActivity, ForegroundService::class.java)
+                    stopService(serviceIntent)
+
+                    // 2. 연결
+                    val device = connectedDeviceAdapter.getDeviceAtPosition(position)
+                    bluetoothViewModel.connectToDevice(device)
+                }
+            }
+        }
+    }
+
+    private fun addNewDevices(navHeader: View) {
+        val btnDeviceDiscovery = navHeader.findViewById<Button>(R.id.btndevicediscovery)
+        btnDeviceDiscovery.setOnClickListener {
+            checkBluetoothEnabledState {
+                drawerLayout.closeDrawer(GravityCompat.START)
+                moveActivity(DeviceDiscoveryActivity::class.java)
+            }
+        }
+    }
+
+    fun pairedDevices(navHeader: View) {
+        recyclerView = navHeader.findViewById(R.id.paireddevice)
+        connectedDeviceAdapter = ConnectedDeviceAdapter(emptyList())
+
+        recyclerView.apply {
+            adapter = connectedDeviceAdapter
+            layoutManager = LinearLayoutManager(this@UserProfileActivity)
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                bluetoothViewModel.pairedDevices.collect { devices ->
+                    connectedDeviceAdapter.updateDevices(devices)
+                }
+            }
+        }
+    }
+
+    /** 블루투스 활성화 상태 템플릿 */
+    fun checkBluetoothEnabledState(enabledAction: () -> Unit) {
+        when (bluetoothViewModel.checkBluetoothState()) {
+            BluetoothState.ENABLED -> {
+                enabledAction()
+            }
+
+            BluetoothState.DISABLED -> {
+                Log.d("[로그]", "블루투스 활성화 되어있지 않습니다.")
+                val bluetoothIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                startForResult.launch(bluetoothIntent)
+            }
+
+            else -> showToast("블루투스를 지원하지 않는 장비입니다.")
+        }
+    }
+
+    private fun showConnectSuccessMessage() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                bluetoothViewModel.connectionStatus.collect { isConnected ->
+                    if (isConnected) {
+                        showToast("연결되었습니다.")
+                        delay(1000)
+                        startBluetoothService()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun startBluetoothService() {
+        val serviceIntent = Intent(this, ForegroundService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent)
+        } else {
+            startService(serviceIntent)
+        }
+    }
+
 }
 
 
