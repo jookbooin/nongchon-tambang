@@ -41,6 +41,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.capstone.nongchown.Adapter.ConnectedDeviceAdapter
 import com.capstone.nongchown.Model.Enum.BluetoothState
 import com.capstone.nongchown.Model.ForegroundService
+import com.capstone.nongchown.Model.UserInfo
 
 import com.capstone.nongchown.R
 import com.capstone.nongchown.Utils.moveActivity
@@ -133,24 +134,47 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         saveButton.setOnClickListener {
             try {
                 Log.d("[로그]", "저장 버튼 클릭")
+                for (i in emergencyContacts.childCount - 1 downTo 0) {
+                    val eContact = emergencyContacts.getChildAt(i)
+                    if (eContact is EditText && eContact.text.isEmpty()) {
+                        emergencyContacts.removeView(eContact)
+                    }
+                }
                 emergencyContacts.children.filterIsInstance<EditText>()
                     .forEach { emergencyContact ->
                         Log.d("[로그]", "emergencyContact: ${emergencyContact.text}")
                         emergencyContactList.add(emergencyContact.text.toString())
                     }
+
                 val userInfo = UserProfileViewModel().userProfileSave(
-                    userName.text.toString(),
-                    userEmail.text.toString(),
-                    userAge.text.toString(),
-                    userGender.selectedItem.toString(),
-                    emergencyContactList
+                    UserInfo(
+                        userName.text.toString(),
+                        userEmail.text.toString(),
+                        userAge.text.toString(),
+                        userGender.selectedItem.toString(),
+                        emergencyContactList
+                    )
                 )
-                this.name = userInfo.name
-                this.email = userInfo.email
-                this.age = userInfo.age
-                this.gender = userInfo.gender
-                this.emergencyContactList.clear()
-                this.emergencyContactList.addAll(userInfo.emergencyContactList)
+                name = userInfo.name
+                email = userInfo.email
+                age = userInfo.age
+                gender = userInfo.gender
+                emergencyContactList.clear()
+                emergencyContactList.addAll(userInfo.emergencyContactList)
+
+                userName.setText(userInfo.name)
+                userEmail.setText(userInfo.email)
+                userAge.setText(userInfo.age)
+                userGender.setSelection((if (userInfo.gender == "남") 0 else 1))
+                for (i: Int in 0..<userInfo.emergencyContactList.size) {
+                    addEmergencyContact(emergencyContacts)
+                    Log.d("[로그]", "addEmergencyContact(emergencyContacts)")
+                    val eContact = emergencyContacts.getChildAt(i)
+
+                    if (eContact is EditText) {
+                        eContact.setText(userInfo.emergencyContactList[i])
+                    } else Log.d("[에러]", "비상 연락망 위젯 개수 오류")
+                }
 
                 saveButton.isEnabled = false
             } catch (e: IllegalArgumentException) {
@@ -203,15 +227,12 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
                 addEmergencyContact(emergencyContacts)
                 Log.d("[로그]", "addEmergencyContact(emergencyContacts)")
                 val eContact = emergencyContacts.getChildAt(i)
+
                 if (eContact is EditText) {
                     eContact.setText(userInfo.emergencyContactList[i])
-                } else {
-                    Log.d("[에러]", "비상 연락망 위젯 개수 오류")
-                }
+                } else Log.d("[에러]", "비상 연락망 위젯 개수 오류")
             }
         }
-
-
         Log.d("[로그]", "initializing complete")
     }
 

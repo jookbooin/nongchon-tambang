@@ -75,34 +75,42 @@ class UserProfileViewModel : ViewModel() {
         }
     }
 
-    fun userProfileSave(
-        name: String,
-        email: String,
-        age: String,
-        gender: String,
-        emergencyContactList: MutableList<String>
-    ): UserInfo {
+    private fun validateUserInfo(userInfo: UserInfo): UserInfo {
+        val validName = userInfo.name.trim()
+        val validEmail = validateEmail(userInfo.email).trim()
+        val validAge = validateAge(userInfo.age).trim()
+        val validGender = userInfo.gender.trim()
+        val validEmergencyContactList = mutableListOf<String>()
+        userInfo.emergencyContactList.forEach { contact ->
+            Log.d("[로그]", validatePhone(contact).trim())
+            validEmergencyContactList.add(validatePhone(contact).trim())
+        }
+
+
+        Log.d("[로그]", "valid name: $validName")
+        Log.d("[로그]", "valid email: $validEmail")
+        Log.d("[로그]", "valid age: $validAge")
+        Log.d("[로그]", "valid gender: $validGender")
+        validEmergencyContactList.forEach { eContact ->
+            Log.d("[로그]", "valid emergency contact: $eContact")
+        }
+
+        return UserInfo(validName, validEmail, validAge, validGender, validEmergencyContactList)
+    }
+
+    fun userProfileSave(userInfo: UserInfo): UserInfo {
         try {
-            val validName = name.trim()
-            val validEmail = validateEmail(email).trim()
-            val validAge = validateAge(age).trim()
-            val validGender = gender.trim()
-            val emergencyContacts = mutableListOf<String>()
-
-            emergencyContactList.forEach { contact ->
-                emergencyContacts.add(validatePhone(contact).trim())
-            }
-
-            Log.d("[로그]", validName)
-            Log.d("[로그]", validEmail)
-            Log.d("[로그]", validAge)
-            Log.d("[로그]", validGender)
-            emergencyContactList.forEach { eContact ->
-                Log.d("[로그]", eContact)
-            }
-
-            return UserInfo(validName, validEmail, validAge, validGender, emergencyContacts)
-
+            val validUserInfo = validateUserInfo(
+                UserInfo(
+                    userInfo.name,
+                    userInfo.email,
+                    userInfo.age,
+                    userInfo.gender,
+                    userInfo.emergencyContactList
+                )
+            )
+            firebaseComm.updateOrCreateUser(validUserInfo)
+            return validUserInfo
         } catch (e: IllegalArgumentException) {
             Log.d("[에러]", "${e.message}")
             throw e
