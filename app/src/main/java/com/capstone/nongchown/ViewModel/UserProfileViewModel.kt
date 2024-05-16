@@ -48,10 +48,8 @@ class UserProfileViewModel : ViewModel() {
         val phoneRegexWithoutHyphen = "^\\d{10,11}$".toRegex()
 
         if (phoneRegexWithHyphen.matches(cleanNumber)) {
-            Log.d("[로그]", "clean number: $number")
             return cleanNumber  // 이미 유효한 형식
         } else if (phoneRegexWithoutHyphen.matches(digitsOnly)) {
-            Log.d("[로그]", "digit only number: $number")
             // 하이픈이 없는 경우에는 적절한 위치에 하이픈 추가
             return when (digitsOnly.length) {
                 10 -> "${digitsOnly.substring(0, 3)}-${
@@ -82,7 +80,6 @@ class UserProfileViewModel : ViewModel() {
         val validGender = userInfo.gender.trim()
         val validEmergencyContactList = mutableListOf<String>()
         userInfo.emergencyContactList.forEach { contact ->
-            Log.d("[로그]", validatePhone(contact).trim())
             validEmergencyContactList.add(validatePhone(contact).trim())
         }
 

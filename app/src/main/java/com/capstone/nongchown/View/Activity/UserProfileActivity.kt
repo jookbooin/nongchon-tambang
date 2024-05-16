@@ -128,23 +128,24 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         val emergencyContacts = findViewById<LinearLayout>(R.id.emergency_contact_list)
 
         emergencyAddButton.setOnClickListener {
-            addEmergencyContact(emergencyContacts)
+            addEmergencyContact(emergencyContacts, "")
         }
 
         saveButton.setOnClickListener {
             try {
                 Log.d("[로그]", "저장 버튼 클릭")
+                emergencyContactList.clear()
                 for (i in emergencyContacts.childCount - 1 downTo 0) {
                     val eContact = emergencyContacts.getChildAt(i)
                     if (eContact is EditText && eContact.text.isEmpty()) {
                         emergencyContacts.removeView(eContact)
                     }
                 }
-                emergencyContacts.children.filterIsInstance<EditText>()
-                    .forEach { emergencyContact ->
-                        Log.d("[로그]", "emergencyContact: ${emergencyContact.text}")
+                emergencyContacts.children.forEach { emergencyContact ->
+                    if (emergencyContact is EditText) {
                         emergencyContactList.add(emergencyContact.text.toString())
                     }
+                }
 
                 val userInfo = UserProfileViewModel().userProfileSave(
                     UserInfo(
@@ -160,20 +161,16 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
                 age = userInfo.age
                 gender = userInfo.gender
                 emergencyContactList.clear()
+                Log.d("[로그]", "emergencyContactList.clear(): $emergencyContactList")
                 emergencyContactList.addAll(userInfo.emergencyContactList)
 
                 userName.setText(userInfo.name)
                 userEmail.setText(userInfo.email)
                 userAge.setText(userInfo.age)
                 userGender.setSelection((if (userInfo.gender == "남") 0 else 1))
+                emergencyContacts.removeViews(0, emergencyContacts.childCount - 1)
                 for (i: Int in 0..<userInfo.emergencyContactList.size) {
-                    addEmergencyContact(emergencyContacts)
-                    Log.d("[로그]", "addEmergencyContact(emergencyContacts)")
-                    val eContact = emergencyContacts.getChildAt(i)
-
-                    if (eContact is EditText) {
-                        eContact.setText(userInfo.emergencyContactList[i])
-                    } else Log.d("[에러]", "비상 연락망 위젯 개수 오류")
+                    addEmergencyContact(emergencyContacts, userInfo.emergencyContactList[i])
                 }
 
                 saveButton.isEnabled = false
@@ -224,23 +221,18 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
             userAge.setText(userInfo.age)
             userGender.setSelection((if (userInfo.gender == "남") 0 else 1))
             for (i: Int in 0..<userInfo.emergencyContactList.size) {
-                addEmergencyContact(emergencyContacts)
-                Log.d("[로그]", "addEmergencyContact(emergencyContacts)")
-                val eContact = emergencyContacts.getChildAt(i)
-
-                if (eContact is EditText) {
-                    eContact.setText(userInfo.emergencyContactList[i])
-                } else Log.d("[에러]", "비상 연락망 위젯 개수 오류")
+                addEmergencyContact(emergencyContacts, userInfo.emergencyContactList[i])
             }
         }
         Log.d("[로그]", "initializing complete")
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    private fun addEmergencyContact(emergencyContacts: LinearLayout) {
+    private fun addEmergencyContact(emergencyContacts: LinearLayout, emergencyContact: String) {
         val inflater = LayoutInflater.from(this)
         val eContact =
             inflater.inflate(R.layout.emergency_contact_item, emergencyContacts, false) as EditText
+
         eContact.addTextChangedListener {
             Log.d("[로그]", "emergencyContact changed")
             saveButton.isEnabled = true
@@ -256,6 +248,7 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
                 false
             }
         }
+        eContact.setText(emergencyContact)
         emergencyContacts.addView(eContact, emergencyContacts.childCount - 1)
     }
 
