@@ -13,6 +13,7 @@
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" /> <!-- 이미 페어링된 블루투스 기기와 통신 -->
     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" /> <!-- 현재 기기를 다른 블루투스 기기에서 검색 가능하도록 설정 -->
     <!-- SDK 30 이하를 타겟팅 하는 앱 Bluetooth 권한 -->
+    <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /> <!-- 정밀 위치 -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 

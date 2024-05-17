@@ -98,7 +98,13 @@ class LogoActivity : ComponentActivity() {
 
             }
 
-            Constants.PERMISSION_REQUEST_CODE -> {}
+            Constants.PERMISSION_REQUEST_CODE -> {
+                if (grantResults.isNotEmpty() && isPermissionGranted(grantResults)) {
+                    Log.d("[로그]", "모든 권한을 허용하였습니다.")
+                    showToast("모든 권한을 허용하였습니다.")
+                }
+
+            }
         }
 
         moveMainActivity()

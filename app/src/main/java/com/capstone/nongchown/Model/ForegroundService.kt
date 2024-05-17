@@ -121,6 +121,7 @@ class ForegroundService : Service() {
                 if (data.isNotEmpty()) {
                     accidentFlag=true
                     showScreen(data)
+                    bluetoothRepository.sendDataToDevice()
                 }
 
             }
