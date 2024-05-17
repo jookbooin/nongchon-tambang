@@ -1,14 +1,17 @@
 package com.capstone.nongchown.View.Activity
 
-import android.bluetooth.BluetoothAdapter
-import android.content.Intent
-import android.os.Build
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.MotionEvent
+
+import android.bluetooth.BluetoothAdapter
+import android.content.Intent
+import android.os.Build
 import android.view.MenuItem
+
 import android.view.View
-import android.widget.AdapterView
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -27,25 +30,31 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.children
 import androidx.core.widget.addTextChangedListener
-import androidx.core.widget.doOnTextChanged
+
+import androidx.lifecycle.lifecycleScope
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
+
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.capstone.nongchown.Adapter.ConnectedDeviceAdapter
 import com.capstone.nongchown.Model.Enum.BluetoothState
 import com.capstone.nongchown.Model.ForegroundService
+import com.capstone.nongchown.Model.UserInfo
+
 import com.capstone.nongchown.R
 import com.capstone.nongchown.Utils.moveActivity
 import com.capstone.nongchown.Utils.showToast
 import com.capstone.nongchown.ViewModel.BluetoothViewModel
 import com.capstone.nongchown.ViewModel.UserProfileViewModel
+
+import kotlinx.coroutines.launch
+
+
 import com.google.android.material.navigation.NavigationView
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
@@ -54,6 +63,8 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
     lateinit var connectedDeviceAdapter: ConnectedDeviceAdapter
     lateinit var recyclerView: RecyclerView
 
+    private val userprofileViewModel = UserProfileViewModel()
+
     private lateinit var pageScroll: ScrollView
     private lateinit var drawerLayout: DrawerLayout
 
@@ -61,8 +72,14 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
     private lateinit var email: String
     private lateinit var age: String
     private lateinit var gender: String
-
     private val emergencyContactList = mutableListOf<String>()
+
+    private val emergencyAddButton: Button by lazy {
+        findViewById(R.id.emergency_contact_addButton)
+    }
+    private val saveButton: Button by lazy {
+        findViewById(R.id.user_profile_saveButton)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,8 +87,6 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         setContentView(R.layout.activity_user_profile)
 
         pageScroll = findViewById(R.id.user_profile_scroll)
-        val emergencyAddButton = findViewById<Button>(R.id.emergency_contact_addButton)
-        val saveButton = findViewById<Button>(R.id.user_profile_saveButton)
 
         val userName = findViewById<EditText>(R.id.user_name)
         userName.addTextChangedListener {
@@ -92,54 +107,73 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         }
 
         val userGender = findViewById<Spinner>(R.id.gender)
-        userGender.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(
-                parent: AdapterView<*>,
-                view: View?,
-                position: Int,
-                id: Long
-            ) {
-                if (userGender.selectedItem.toString() != gender) {
-                    saveButton.isEnabled = true
-                }
-                Log.d("[로그]", "gender changed")
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>) {
-                // Do nothing
-            }
-        }
+//        userGender.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+//            override fun onItemSelected(
+//                parent: AdapterView<*>,
+//                view: View?,
+//                position: Int,
+//                id: Long
+//            ) {
+//                if (userGender.selectedItem.toString() != gender) {
+//                    saveButton.isEnabled = true
+//                }
+//                Log.d("[로그]", "gender changed")
+//            }
+//
+//            override fun onNothingSelected(parent: AdapterView<*>) {
+//                // Do nothing
+//            }
+//        }
 
         val emergencyContacts = findViewById<LinearLayout>(R.id.emergency_contact_list)
-        emergencyContacts.children.filterIsInstance<EditText>().forEach { emergencyContact ->
-            emergencyContact.addTextChangedListener {
-                Log.d("[로그]", "eContact added")
-                saveButton.isEnabled = true
-            }
-        }
 
         emergencyAddButton.setOnClickListener {
-            addEmergencyContact(emergencyContacts)
+            addEmergencyContact(emergencyContacts, "")
         }
 
         saveButton.setOnClickListener {
             try {
-                emergencyContacts.children.filterIsInstance<EditText>()
-                    .forEach { emergencyContact ->
+                Log.d("[로그]", "저장 버튼 클릭")
+                emergencyContactList.clear()
+                for (i in emergencyContacts.childCount - 1 downTo 0) {
+                    val eContact = emergencyContacts.getChildAt(i)
+                    if (eContact is EditText && eContact.text.isEmpty()) {
+                        emergencyContacts.removeView(eContact)
+                    }
+                }
+                emergencyContacts.children.forEach { emergencyContact ->
+                    if (emergencyContact is EditText) {
                         emergencyContactList.add(emergencyContact.text.toString())
                     }
-                Log.d("[로그]", "저장 버튼 클릭")
-                val userinfo = UserProfileViewModel().userProfileSave(
-                    userName.text.toString(),
-                    userEmail.text.toString(),
-                    userAge.text.toString(),
-                    userGender.selectedItem.toString(),
-                    emergencyContactList
+                }
+
+                val userInfo = UserProfileViewModel().userProfileSave(
+                    UserInfo(
+                        userName.text.toString(),
+                        userEmail.text.toString(),
+                        userAge.text.toString(),
+                        userGender.selectedItem.toString(),
+                        emergencyContactList
+                    )
                 )
-                this.name = userinfo.name
-                this.email = userinfo.email
-                this.age = userinfo.age
-                this.gender = userinfo.gender
+                name = userInfo.name
+                email = userInfo.email
+                age = userInfo.age
+                gender = userInfo.gender
+                emergencyContactList.clear()
+                Log.d("[로그]", "emergencyContactList.clear(): $emergencyContactList")
+                emergencyContactList.addAll(userInfo.emergencyContactList)
+
+                userName.setText(userInfo.name)
+                userEmail.setText(userInfo.email)
+                userAge.setText(userInfo.age)
+                userGender.setSelection((if (userInfo.gender == "남") 0 else 1))
+                emergencyContacts.removeViews(0, emergencyContacts.childCount - 1)
+                for (i: Int in 0..<userInfo.emergencyContactList.size) {
+                    addEmergencyContact(emergencyContacts, userInfo.emergencyContactList[i])
+                }
+
+                saveButton.isEnabled = false
             } catch (e: IllegalArgumentException) {
                 Toast.makeText(this, "입력 오류: ${e.message}", Toast.LENGTH_LONG).show()
             }
@@ -177,57 +211,47 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
 
         Log.d("[로그]", "initializing")
 
-        name = "김농촌"
         email = "sanghoo1023@gmail.com"
-        age = "23"
-        gender = "여"
-        emergencyContactList.add("010-5341-3270")
 
-        userName.setText(name)
-        userEmail.setText(email)
-        userAge.setText(age)
-        userGender.setSelection((if (gender == "남") 0 else 1))
+        lifecycleScope.launch {
+            val userInfo = userprofileViewModel.loadStoredData(email)
 
-
-        for (i: Int in 0..<emergencyContactList.size) {
-            addEmergencyContact(emergencyContacts)
-            Log.d("[로그]", "addEmergencyContact(emergencyContacts)")
-            val eContact = emergencyContacts.getChildAt(i)
-            if (eContact is EditText) {
-                eContact.setText(emergencyContactList[i])
-            } else {
-                Log.d("[에러]", "비상 연락망 위젯 개수 오류")
+            userName.setText(userInfo.name)
+            userEmail.setText(userInfo.email)
+            userAge.setText(userInfo.age)
+            userGender.setSelection((if (userInfo.gender == "남") 0 else 1))
+            for (i: Int in 0..<userInfo.emergencyContactList.size) {
+                addEmergencyContact(emergencyContacts, userInfo.emergencyContactList[i])
             }
         }
         Log.d("[로그]", "initializing complete")
     }
 
-    private fun addEmergencyContact(emergencyContacts: LinearLayout) {
+    @SuppressLint("ClickableViewAccessibility")
+    private fun addEmergencyContact(emergencyContacts: LinearLayout, emergencyContact: String) {
         val inflater = LayoutInflater.from(this)
-        val eContact = inflater.inflate(R.layout.emergency_contact_item, emergencyContacts, false)
-        setupFocusListener(eContact as EditText)
+        val eContact =
+            inflater.inflate(R.layout.emergency_contact_item, emergencyContacts, false) as EditText
+
+        eContact.addTextChangedListener {
+            Log.d("[로그]", "emergencyContact changed")
+            saveButton.isEnabled = true
+
+            eContact.setOnTouchListener { v, event ->
+                if (event.action == MotionEvent.ACTION_UP) {
+                    val clearDrawable = eContact.compoundDrawablesRelative[2]
+                    if (clearDrawable != null && event.rawX >= (eContact.right - clearDrawable.bounds.width())) {
+                        eContact.setText("")
+                        return@setOnTouchListener true
+                    }
+                }
+                false
+            }
+        }
+        eContact.setText(emergencyContact)
         emergencyContacts.addView(eContact, emergencyContacts.childCount - 1)
     }
 
-    //    form 입력 시 해당 form 으로 스크롤 이동
-    private fun setupFocusListener(editText: EditText) {
-        editText.setOnFocusChangeListener { v, hasFocus ->
-            if (hasFocus) {
-                pageScroll.post {
-                    pageScroll.scrollTo(0, v.top)
-                }
-            }
-        }
-
-        // Optional: Adjusting scroll when text changes
-        editText.doOnTextChanged { _, _, _, _ ->
-            if (editText.hasFocus()) {
-                pageScroll.post {
-                    pageScroll.scrollTo(0, editText.top)
-                }
-            }
-        }
-    }
 
     /** sideBar */
     override fun onNavigationItemSelected(item: MenuItem): Boolean { // X
@@ -236,20 +260,27 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         return false
     }
 
-    val startForResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
-        if (result.resultCode == RESULT_OK) {
-            Log.d("[로그]", "블루투스 활성화")
-        } else if (result.resultCode == RESULT_CANCELED) {
-            Log.d("[로그]", "사용자 블루투스 활성화 거부")
+    val startForResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+            if (result.resultCode == RESULT_OK) {
+                Log.d("[로그]", "블루투스 활성화")
+            } else if (result.resultCode == RESULT_CANCELED) {
+                Log.d("[로그]", "사용자 블루투스 활성화 거부")
+            }
         }
-    }
 
     private fun clickAndOpenSideBar() {
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        val toggle = ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.open_nav, R.string.close_nav)
+        val toggle = ActionBarDrawerToggle(
+            this,
+            drawerLayout,
+            toolbar,
+            R.string.open_nav,
+            R.string.close_nav
+        )
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
 
@@ -277,9 +308,10 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         connectedDeviceAdapter.itemClick = object : ConnectedDeviceAdapter.ItemClick {
 
             override fun onClick(view: View, position: Int) {
-                checkBluetoothEnabledState{
+                checkBluetoothEnabledState {
                     // 1. 우선 실행중인 service 제거
-                    val serviceIntent = Intent(this@UserProfileActivity, ForegroundService::class.java)
+                    val serviceIntent =
+                        Intent(this@UserProfileActivity, ForegroundService::class.java)
                     stopService(serviceIntent)
 
                     // 2. 연결
@@ -301,7 +333,7 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
     }
 
     fun pairedDevices(navHeader: View) {
-        recyclerView = navHeader.findViewById(R.id.paireddevice);
+        recyclerView = navHeader.findViewById(R.id.paireddevice)
         connectedDeviceAdapter = ConnectedDeviceAdapter(emptyList())
 
         recyclerView.apply {
@@ -353,7 +385,7 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         val serviceIntent = Intent(this, ForegroundService::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(serviceIntent)
-        }else{
+        } else {
             startService(serviceIntent)
         }
     }

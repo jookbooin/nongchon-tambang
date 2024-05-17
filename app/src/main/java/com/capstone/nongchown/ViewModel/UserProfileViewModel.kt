@@ -2,11 +2,22 @@ package com.capstone.nongchown.ViewModel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import com.capstone.nongchown.Model.FirebaseCommunication
 import com.capstone.nongchown.Model.UserInfo
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 
 class UserProfileViewModel : ViewModel() {
-    fun loadStoredData() {
-//        앱을 시작하면 데이터베이스에서 사용자 정보를 긁어오는 메소드
+    private val firebaseComm = FirebaseCommunication()
+
+    suspend fun loadStoredData(email: String): UserInfo = suspendCancellableCoroutine { cont ->
+        firebaseComm.fetchUserByDocumentId(email) { user ->
+            if (user != null) {
+                cont.resume(user)
+            } else {
+                cont.resume(UserInfo())
+            }
+        }
     }
 
     private fun validateEmail(email: String): String {
@@ -62,31 +73,41 @@ class UserProfileViewModel : ViewModel() {
         }
     }
 
-    fun userProfileSave(
-        name: String,
-        email: String,
-        age: String,
-        gender: String,
-        emergencyContactList: MutableList<String>
-    ): UserInfo {
+    private fun validateUserInfo(userInfo: UserInfo): UserInfo {
+        val validName = userInfo.name.trim()
+        val validEmail = validateEmail(userInfo.email).trim()
+        val validAge = validateAge(userInfo.age).trim()
+        val validGender = userInfo.gender.trim()
+        val validEmergencyContactList = mutableListOf<String>()
+        userInfo.emergencyContactList.forEach { contact ->
+            validEmergencyContactList.add(validatePhone(contact).trim())
+        }
+
+
+        Log.d("[로그]", "valid name: $validName")
+        Log.d("[로그]", "valid email: $validEmail")
+        Log.d("[로그]", "valid age: $validAge")
+        Log.d("[로그]", "valid gender: $validGender")
+        validEmergencyContactList.forEach { eContact ->
+            Log.d("[로그]", "valid emergency contact: $eContact")
+        }
+
+        return UserInfo(validName, validEmail, validAge, validGender, validEmergencyContactList)
+    }
+
+    fun userProfileSave(userInfo: UserInfo): UserInfo {
         try {
-            val validName = name.trim()
-            val validEmail = validateEmail(email).trim()
-            val validAge = validateAge(age).trim()
-            val emergencyContacts = mutableListOf<String>()
-            emergencyContactList.forEach { contact ->
-                emergencyContacts.add(validatePhone(contact).trim())
-            }
-
-            Log.d("[로그]", validName)
-            Log.d("[로그]", validEmail)
-            Log.d("[로그]", validAge)
-            Log.d("[로그]", gender)
-            emergencyContactList.forEach { eContact ->
-                Log.d("[로그]", eContact)
-            }
-            return UserInfo(validName, validEmail, validAge, gender, emergencyContacts)
-
+            val validUserInfo = validateUserInfo(
+                UserInfo(
+                    userInfo.name,
+                    userInfo.email,
+                    userInfo.age,
+                    userInfo.gender,
+                    userInfo.emergencyContactList
+                )
+            )
+            firebaseComm.updateOrCreateUser(validUserInfo)
+            return validUserInfo
         } catch (e: IllegalArgumentException) {
             Log.d("[에러]", "${e.message}")
             throw e
