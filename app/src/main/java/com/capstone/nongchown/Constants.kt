@@ -9,7 +9,9 @@ import androidx.annotation.RequiresApi
 object Constants {
 
         val PERMISSIONS = arrayOf(
-            Manifest.permission.ACCESS_FINE_LOCATION
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.BLUETOOTH ,
+            Manifest.permission.BLUETOOTH_ADMIN
         )
 
         @RequiresApi(Build.VERSION_CODES.S)

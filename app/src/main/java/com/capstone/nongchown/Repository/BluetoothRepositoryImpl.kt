@@ -168,7 +168,9 @@ class BluetoothRepositoryImpl @Inject constructor(
                     val message = buffer.decodeToString(endIndex = bytes)
                     Log.d("[로그]", "수신된 메시지: $message")
 
-                    emit(message)                                           // message 방출 -> collect에서 수집
+                    emit(message)
+                    sendDataToDevice()
+                    // message 방출 -> collect에서 수집
                     /**
                      * 데이터가 1번만 들어오도록 앱에서 처리해야 하는 경우
                      * 1. 30초 delay
