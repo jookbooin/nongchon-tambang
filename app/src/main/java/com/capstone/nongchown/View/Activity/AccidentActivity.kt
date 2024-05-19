@@ -14,10 +14,15 @@ import androidx.activity.viewModels
 import com.capstone.nongchown.Model.ForegroundService
 import com.capstone.nongchown.R
 import com.capstone.nongchown.ViewModel.AccidentViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class AccidentActivity : ComponentActivity() {
 
     val accidentViewModel by viewModels<AccidentViewModel>()
+    var timer =0
 
     companion object {
         private var instance: AccidentActivity? = null
@@ -59,6 +64,7 @@ class AccidentActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         instance = this
+
         val serviceIntent=Intent(this, ForegroundService::class.java)
         bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE)
 
@@ -75,6 +81,18 @@ class AccidentActivity : ComponentActivity() {
                 updateTimerText(countData)
             }
         }
+
+        timer = savedInstanceState?.getInt("timer") ?: intent.getIntExtra("timer", 0)
+
+       CoroutineScope(Dispatchers.Main).launch {
+           while (timer > 0) {
+               delay(1000)
+               timer--
+               updateTimerText(timer)
+
+           }
+       }
+
 
 
 
@@ -93,4 +111,6 @@ class AccidentActivity : ComponentActivity() {
     public fun updateTimerText(count: Int) {
         findViewById<TextView>(R.id.timer).text = count.toString()
     }
+
+
 }

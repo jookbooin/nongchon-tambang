@@ -16,10 +16,13 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.telephony.SmsManager
 import android.util.Log
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.capstone.nongchown.R
@@ -120,7 +123,8 @@ class ForegroundService : Service() {
             bluetoothRepository.readDataFromDevice().collect { data ->
                 if (data.isNotEmpty()) {
                     accidentFlag=true
-                    showScreen(data)
+                    showScreen(count.value ?:0)
+                    bluetoothRepository.sendDataToDevice()
                 }
 
             }
@@ -134,9 +138,9 @@ class ForegroundService : Service() {
                     count.postValue((count.value ?: 0) - 1)
                     Log.d("test", count.toString())
 
-                    val accident = AccidentActivity.getInstance()
+                    //val accident = AccidentActivity.getInstance()
                     val accidentIntent = Intent(nowContext, AccidentActivity::class.java)
-                    accidentIntent.putExtra("timer", (count.value ?: 0).toString())
+                    accidentIntent.putExtra("timer", (count.value ?: 0))
                     val pendingMain = PendingIntent.getActivity(
                         nowContext,
                         0,
@@ -169,20 +173,55 @@ class ForegroundService : Service() {
 
                     NotificationManagerCompat.from(nowContext).notify(1, updatedNotification)
 
-
+                    /*
                     // 메인 액티비티가 존재하고, 참조가 유효한지 확인
                     if (accident != null) {
                         // 데이터 전달
                         accident.updateTimerText((count.value ?: 0))
                     } else {
-                    }
-                } else if ((count.value ?: 0)<= 0) {
+                    }*/
+
+                } else if ((count.value ?: 0)<= 0 && accidentFlag) {
                     val updatedNotification = NotificationCompat.Builder(nowContext, "1")
                         .setContentTitle("전복사고 발생")
                         .setContentText("정상적으로 신고되었습니다.")
                         .setSmallIcon(R.drawable.ic_launcher_background)
                         .build()
                     NotificationManagerCompat.from(nowContext).notify(1, updatedNotification)
+
+                    //문자전송
+
+                    val firebase = FirebaseCommunication()
+                    val email = "sanghoo1023@gmail.com"
+
+                    firebase.fetchUserByDocumentId(email) { userInfo ->
+                        if (userInfo != null) {
+                            Log.d("[로그]", "사용자 이름: ${userInfo.name}, 나이: ${userInfo.age}, 이메일: ${userInfo.email}")
+                            if (ContextCompat.checkSelfPermission(
+                                    nowContext,
+                                    Manifest.permission.SEND_SMS
+                                ) != PackageManager.PERMISSION_GRANTED
+                            ) {//권한이 없다면
+
+                            } else { //권한이 있다면 SMS를 보낸다.
+
+                                val smsManager = SmsManager.getDefault()
+                                try {
+
+                                    smsManager.sendTextMessage("+82"+userInfo.emergencyContactList[0], null, "안녕~~~", null,null)
+
+                                } catch (ex: Exception) {
+                                    ex.printStackTrace()
+                                    Toast.makeText(baseContext, ex.message, Toast.LENGTH_SHORT).show()
+                                }
+                            }
+
+                        } else {
+                            Log.d("[로그]", "사용자 정보를 찾을 수 없습니다.")
+                        }
+                    }
+                    changeAccidentFlag(false)
+
                 } else {
                     val updatedNotification = NotificationCompat.Builder(nowContext, "1")
                         .setContentTitle("농촌 실행중")
@@ -206,6 +245,7 @@ class ForegroundService : Service() {
     }
     public fun userSafe() {
         changeAccidentFlag(false)
+        count.postValue(20)
         Log.d("test","foreground")
 
     }
@@ -227,11 +267,11 @@ class ForegroundService : Service() {
         count.postValue(timer)
     }
 
-    fun showScreen(data: String) {
+    fun showScreen(data: Int) {
         val intent = Intent(this, AccidentActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
             Log.d("[로그]", "data 받을 시 화면 띄우기")
-            putExtra("data", data)
+            putExtra("timer", (count.value ?: 0))
         }
         startActivity(intent)
     }
