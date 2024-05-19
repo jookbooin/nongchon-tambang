@@ -142,7 +142,7 @@ class BluetoothRepositoryImpl @Inject constructor(
             bluetoothSocket?.let {
                 try {
                     val outputStream: OutputStream = it.outputStream
-                    val dataString = "jookbooin?\n".toByteArray()
+                    val dataString = "E".toByteArray()
                     outputStream.write(dataString)
                     outputStream.flush()                                    // 즉시 전송, 출력
                     Log.d("[로그]", "데이터 전송 성공")
@@ -169,7 +169,7 @@ class BluetoothRepositoryImpl @Inject constructor(
                     Log.d("[로그]", "수신된 메시지: $message")
 
                     emit(message)
-                    sendDataToDevice()
+                    //sendDataToDevice()
                     // message 방출 -> collect에서 수집
                     /**
                      * 데이터가 1번만 들어오도록 앱에서 처리해야 하는 경우

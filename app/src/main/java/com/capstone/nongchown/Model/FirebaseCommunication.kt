@@ -4,6 +4,7 @@ import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 
 class FirebaseCommunication {
+
     private val db = FirebaseFirestore.getInstance()
     private val collectionUser = db.collection("user_data")
 

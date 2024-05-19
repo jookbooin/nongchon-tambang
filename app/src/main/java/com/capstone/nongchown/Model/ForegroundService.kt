@@ -124,6 +124,7 @@ class ForegroundService : Service() {
                 if (data.isNotEmpty()) {
                     accidentFlag=true
                     showScreen(count.value ?:0)
+                    bluetoothRepository.sendDataToDevice()
                 }
 
             }
@@ -180,7 +181,7 @@ class ForegroundService : Service() {
                     } else {
                     }*/
 
-                } else if ((count.value ?: 0)<= 0) {
+                } else if ((count.value ?: 0)<= 0 && accidentFlag) {
                     val updatedNotification = NotificationCompat.Builder(nowContext, "1")
                         .setContentTitle("전복사고 발생")
                         .setContentText("정상적으로 신고되었습니다.")
@@ -189,23 +190,38 @@ class ForegroundService : Service() {
                     NotificationManagerCompat.from(nowContext).notify(1, updatedNotification)
 
                     //문자전송
-                    val phoneText = "01024618678"
-                    if (ContextCompat.checkSelfPermission(
-                            nowContext,
-                            Manifest.permission.SEND_SMS
-                        ) != PackageManager.PERMISSION_GRANTED
-                    ) {//권한이 없다면
 
-                    } else { //권한이 있다면 SMS를 보낸다.
+                    val firebase = FirebaseCommunication()
+                    val email = "sanghoo1023@gmail.com"
 
-                        val smsManager = SmsManager.getDefault()
-                        try {
-                            smsManager.sendTextMessage("+82"+phoneText, null, "안녕~~~", null,null)
-                        } catch (ex: Exception) {
-                            ex.printStackTrace()
-                            Toast.makeText(baseContext, ex.message, Toast.LENGTH_SHORT).show()
+                    firebase.fetchUserByDocumentId(email) { userInfo ->
+                        if (userInfo != null) {
+                            Log.d("[로그]", "사용자 이름: ${userInfo.name}, 나이: ${userInfo.age}, 이메일: ${userInfo.email}")
+                            if (ContextCompat.checkSelfPermission(
+                                    nowContext,
+                                    Manifest.permission.SEND_SMS
+                                ) != PackageManager.PERMISSION_GRANTED
+                            ) {//권한이 없다면
+
+                            } else { //권한이 있다면 SMS를 보낸다.
+
+                                val smsManager = SmsManager.getDefault()
+                                try {
+
+                                    smsManager.sendTextMessage("+82"+userInfo.emergencyContactList[0], null, "안녕~~~", null,null)
+
+                                } catch (ex: Exception) {
+                                    ex.printStackTrace()
+                                    Toast.makeText(baseContext, ex.message, Toast.LENGTH_SHORT).show()
+                                }
+                            }
+
+                        } else {
+                            Log.d("[로그]", "사용자 정보를 찾을 수 없습니다.")
                         }
                     }
+                    changeAccidentFlag(false)
+
                 } else {
                     val updatedNotification = NotificationCompat.Builder(nowContext, "1")
                         .setContentTitle("농촌 실행중")
