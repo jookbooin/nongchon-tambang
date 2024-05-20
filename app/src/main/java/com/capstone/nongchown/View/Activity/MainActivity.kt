@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Build
 import android.os.Bundle
 import android.telephony.SmsManager
@@ -20,11 +21,14 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.capstone.nongchown.Model.ForegroundService
 import com.capstone.nongchown.R
+import com.capstone.nongchown.Utils.AddressConverter
 import com.capstone.nongchown.Utils.moveActivity
 
 class MainActivity() : AppCompatActivity() {
     private lateinit var sharedPreferences: SharedPreferences
     private val PERMISSIONS_REQUEST_SEND_SMS = 1
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -39,11 +43,27 @@ class MainActivity() : AppCompatActivity() {
             Log.v("setOnClick-MainActivity", "btn")
             moveActivity(UserProfileActivity::class.java)
         }
+
+        val addressConverter = AddressConverter(this, object : AddressConverter.GeocoderListener {
+            override fun sendAddress(address: String) {
+                Log.d("[로그]", "발생 위치 : $address")
+            }
+        }
+        )
+
         val btnBluetooth: Button = findViewById(R.id.btnbluetooth)
         btnBluetooth.setOnClickListener {
-            Log.v("setOnClick-MainActivity", "btn")
-            moveActivity(BluetoothActivity::class.java)
+//            Log.v("setOnClick-MainActivity", "btn")
+//            moveActivity(BluetoothActivity::class.java)
+            val latitude: Double = 37.493579
+            val longitude: Double = 127.024797
 
+            val loc = Location("").apply {
+                this.latitude = latitude
+                this.longitude = longitude
+            }
+
+            addressConverter.getAddressFromLocation(loc)
         }
 
         val btnFirebase: Button = findViewById(R.id.btnFirebase)
@@ -54,11 +74,11 @@ class MainActivity() : AppCompatActivity() {
 
         }
 
-       sharedPreferences = getSharedPreferences("isFirst", Context.MODE_PRIVATE)
-       val isFirstRun = sharedPreferences.getBoolean("isFirstRun", true)
+        sharedPreferences = getSharedPreferences("isFirst", Context.MODE_PRIVATE)
+        val isFirstRun = sharedPreferences.getBoolean("isFirstRun", true)
 
         val btnAccident: Button = findViewById(R.id.btnAccident)
-        btnAccident.setOnClickListener{
+        btnAccident.setOnClickListener {
 
             if (isFirstRun) {
 
@@ -92,8 +112,8 @@ class MainActivity() : AppCompatActivity() {
 
         }
 
-        val smsBtn : Button = findViewById(R.id.btnSMS)
-        smsBtn.setOnClickListener{
+        val smsBtn: Button = findViewById(R.id.btnSMS)
+        smsBtn.setOnClickListener {
             val phoneText: EditText = findViewById(R.id.phone_number)
 
             if (ContextCompat.checkSelfPermission(
@@ -110,17 +130,15 @@ class MainActivity() : AppCompatActivity() {
 
                 val smsManager = SmsManager.getDefault()
                 try {
-                    smsManager.sendTextMessage("+82"+phoneText.text.toString(), null, "안녕~~~", null,null)
+                    smsManager.sendTextMessage("+82" + phoneText.text.toString(), null, "안녕~~~", null, null)
                 } catch (ex: Exception) {
                     ex.printStackTrace()
                     Toast.makeText(baseContext, ex.message, Toast.LENGTH_SHORT).show()
                 }
             }
-
-
         }
-    }
 
+    }
 
 }
 
