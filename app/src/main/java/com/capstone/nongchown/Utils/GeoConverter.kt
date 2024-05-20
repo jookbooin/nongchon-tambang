@@ -1,13 +1,14 @@
 package com.capstone.nongchown.Utils
 
 import android.location.Location
+import android.util.Log
 
 class GeoConverter {
     fun convertFromString(input: String): Location {
         val (latitude: Double, longitude: Double) = try {
             formatValidate(input)
         } catch (e: IllegalArgumentException) {
-
+            Log.d("[로그]","format 오류.. 처리 보류..")
             return Location("").apply {
                 this.latitude = 37.300392
                 this.longitude = 127.039766
