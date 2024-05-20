@@ -27,10 +27,12 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.capstone.nongchown.R
 import com.capstone.nongchown.Repository.BluetoothRepository
+import com.capstone.nongchown.Utils.AddressConverter
 import com.capstone.nongchown.View.Activity.AccidentActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -120,10 +122,18 @@ class ForegroundService : Service() {
 
         serviceScope.launch {
 
-            bluetoothRepository.readDataFromDevice().collect { data ->
-                    accidentFlag=true
-                    showScreen(count.value ?:0)
-                    bluetoothRepository.sendDataToDevice()
+            bluetoothRepository.readDataFromDevice().collect { location ->
+                accidentFlag = true
+                showScreen(count.value ?: 0)
+                bluetoothRepository.sendDataToDevice()
+
+                val addressConverter = AddressConverter(nowContext, object : AddressConverter.GeocoderListener {
+                    override fun sendAddress(address: String) {
+                        Log.d("[로그]", "발생 위치 : $address")
+                    }
+                }
+                )
+                addressConverter.getAddressFromLocation(location)
             }
         }
 
@@ -235,6 +245,11 @@ class ForegroundService : Service() {
         }
 
         return START_NOT_STICKY
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        serviceScope.cancel()
     }
 
     private fun timer(){
