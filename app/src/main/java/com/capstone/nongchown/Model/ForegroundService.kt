@@ -1,4 +1,3 @@
-
 package com.capstone.nongchown.Model
 
 import android.Manifest
@@ -33,7 +32,6 @@ import com.capstone.nongchown.View.Activity.AccidentActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -56,13 +54,14 @@ class ForegroundService : Service() {
     val MAIN_NOTIFICATION = "1"
     val MAIN_ID = 1
 
-
     public var count = MutableLiveData<Int>(20)
     private lateinit var runnable: Runnable
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var nowContext: Context
     private val binder = LocalBinder()
     private var accidentFlag: Boolean = false
+    private lateinit var addressConverter: AddressConverter
+    var receiveAddress: Address? = null
 
     inner class LocalBinder : Binder() {
         fun getService(): ForegroundService {
@@ -73,6 +72,7 @@ class ForegroundService : Service() {
     override fun onBind(intent: Intent?): IBinder? {
         return binder
     }
+
     override fun onCreate() {
         super.onCreate()
         Log.d("[로그]", "서비스 onCreate()")
@@ -93,7 +93,17 @@ class ForegroundService : Service() {
             // for ActivityCompat#requestPermissions for more details.
             // return
         }
+
+        addressConverter = AddressConverter(nowContext, object : AddressConverter.GeocoderListener {
+            override fun sendAddress(address: Address) {
+                receiveAddress = address
+                Log.d("[로그]", "Address 최신화")
+            }
+        }
+        )
+
     }
+
     @SuppressLint("ForegroundServiceType", "ServiceCast")
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
@@ -122,10 +132,18 @@ class ForegroundService : Service() {
             )
         }
 
-        readDataRoutine()
+        serviceScope.launch {
 
-        CoroutineScope(Dispatchers.IO).launch {
-            while (true){
+            bluetoothRepository.readDataFromDevice().collect { location ->
+                accidentFlag = true
+                showScreen(count.value ?: 0)
+                bluetoothRepository.sendDataToDevice()
+                addressConverter.getAddressFromLocation(location) // 성공시 oncreate의 fun sendAddress(address: Address) 로 이동해서 receiveAddress 변경 (비동기..)
+            }
+        }
+
+        serviceScope.launch {
+            while (true) {
 
                 if (accidentFlag && (count.value ?: 0) >= 1) {
 
@@ -175,7 +193,7 @@ class ForegroundService : Service() {
                     } else {
                     }*/
 
-                } else if ((count.value ?: 0)<= 0 && accidentFlag) {
+                } else if ((count.value ?: 0) <= 0 && accidentFlag) {
                     val updatedNotification = NotificationCompat.Builder(nowContext, "1")
                         .setContentTitle("전복사고 발생")
                         .setContentText("정상적으로 신고되었습니다.")
@@ -187,6 +205,7 @@ class ForegroundService : Service() {
 
                     val firebase = FirebaseCommunication()
                     val email = "sanghoo1023@gmail.com"
+                    val accidentAddress = receiveAddress?.let { AddressConverter.convertAddressToString(it) } // 동기화 필요...
 
                     firebase.fetchUserByDocumentId(email) { userInfo ->
                         if (userInfo != null) {
@@ -202,7 +221,7 @@ class ForegroundService : Service() {
                                 val smsManager = SmsManager.getDefault()
                                 try {
 
-                                    smsManager.sendTextMessage("+82"+userInfo.emergencyContactList[0], null, "안녕~~~", null,null)
+                                    smsManager.sendTextMessage("+82" + userInfo.emergencyContactList[0], null, "안녕~~~", null, null)
 
                                 } catch (ex: Exception) {
                                     ex.printStackTrace()
@@ -234,38 +253,19 @@ class ForegroundService : Service() {
         return START_NOT_STICKY
     }
 
-    private fun readDataRoutine() : Job{
-        return serviceScope.launch {
-
-            bluetoothRepository.readDataFromDevice().collect { location ->
-                accidentFlag = true
-                showScreen(count.value ?: 0)
-                bluetoothRepository.sendDataToDevice()
-
-                val addressConverter = AddressConverter(nowContext, object : AddressConverter.GeocoderListener {
-                    override fun sendAddress(address: Address) {
-                        val addressString = AddressConverter.convertAddressToString(address)
-                        Log.d("[로그]", "발생 위치 : $addressString")
-                    }
-                }
-                )
-                addressConverter.getAddressFromLocation(location)
-            }
-        }
-    }
-
     override fun onDestroy() {
         super.onDestroy()
         serviceScope.cancel()
     }
 
-    private fun timer(){
+    private fun timer() {
 
     }
+
     public fun userSafe() {
         changeAccidentFlag(false)
         count.postValue(20)
-        Log.d("test","foreground")
+        Log.d("test", "foreground")
 
     }
 
