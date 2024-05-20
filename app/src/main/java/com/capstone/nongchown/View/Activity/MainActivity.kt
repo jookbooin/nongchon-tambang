@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.location.Address
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
@@ -45,8 +46,9 @@ class MainActivity() : AppCompatActivity() {
         }
 
         val addressConverter = AddressConverter(this, object : AddressConverter.GeocoderListener {
-            override fun sendAddress(address: String) {
-                Log.d("[로그]", "발생 위치 : $address")
+            override fun sendAddress(address: Address) {
+                val addressString = AddressConverter.convertAddressToString(address)
+                Log.d("[로그]", "발생 위치 : $addressString")
             }
         }
         )

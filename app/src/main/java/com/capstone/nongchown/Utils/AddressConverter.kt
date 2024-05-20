@@ -19,7 +19,7 @@ class AddressConverter(context: Context, private val geocoderListener: GeocoderL
     }
 
     interface GeocoderListener {
-        fun sendAddress(address: String)
+        fun sendAddress(address: Address)
     }
 
     fun getAddressFromLocation(location: Location) {
@@ -32,7 +32,7 @@ class AddressConverter(context: Context, private val geocoderListener: GeocoderL
                 object : Geocoder.GeocodeListener {
                     override fun onGeocode(addresses: List<Address>) { // geoCoding 성공하면 AddressList를 전달한다
                         Log.d("[로그]","onGeocode 성공")
-                        geocoderListener.sendAddress(convertAddressToString(addresses[0]))
+                        geocoderListener.sendAddress(addresses[0])
                     }
                     
                     override fun onError(errorMessage: String?) {
@@ -44,23 +44,25 @@ class AddressConverter(context: Context, private val geocoderListener: GeocoderL
             Log.d("[로그]", "TIRAMISU 미만")
             val address: Address? = geocoder?.getFromLocation(location.latitude, location.longitude, 1)?.get(0)
             if (address != null) {
-                geocoderListener.sendAddress(convertAddressToString(address))
+                geocoderListener.sendAddress(address)
             }
         }
     }
 
-    private fun convertAddressToString(address: Address):String{
-        val addressLine:String = address.getAddressLine(0)?:""
-        val postalCode:String = address.postalCode?:""
-        val latitude = address.latitude
-        val longitude = address.longitude
+    companion object {
+        fun convertAddressToString(address: Address): String {
+            val addressLine: String = address.getAddressLine(0) ?: ""
+            val postalCode: String = address.postalCode ?: ""
+            val latitude = address.latitude
+            val longitude = address.longitude
 
-        val result = mutableListOf<String>()
-        result.add(addressLine)
-        result.add(postalCode)
-        result.add("( 위도 : $latitude,")
-        result.add("경도 : $longitude )")
-        return result.joinToString(" ")
+            val result = mutableListOf<String>()
+            result.add(addressLine)
+            result.add(postalCode)
+            result.add("( 위도 : $latitude,")
+            result.add("경도 : $longitude )")
+            return result.joinToString(" ")
+        }
     }
 
 }
