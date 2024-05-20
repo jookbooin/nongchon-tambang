@@ -1,4 +1,3 @@
-
 package com.capstone.nongchown.Model
 
 import android.Manifest
@@ -69,6 +68,7 @@ class ForegroundService : Service() {
     override fun onBind(intent: Intent?): IBinder? {
         return binder
     }
+
     override fun onCreate() {
         super.onCreate()
         Log.d("[로그]", "서비스 onCreate()")
@@ -90,6 +90,7 @@ class ForegroundService : Service() {
             // return
         }
     }
+
     @SuppressLint("ForegroundServiceType", "ServiceCast")
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
@@ -122,8 +123,8 @@ class ForegroundService : Service() {
 
             bluetoothRepository.readDataFromDevice().collect { data ->
                 if (data.isNotEmpty()) {
-                    accidentFlag=true
-                    showScreen(count.value ?:0)
+                    accidentFlag = true
+                    showScreen(count.value ?: 0)
                     bluetoothRepository.sendDataToDevice()
                 }
 
@@ -131,7 +132,7 @@ class ForegroundService : Service() {
         }
 
         CoroutineScope(Dispatchers.IO).launch {
-            while (true){
+            while (true) {
 
                 if (accidentFlag && (count.value ?: 0) >= 1) {
 
@@ -150,7 +151,9 @@ class ForegroundService : Service() {
 
                     val updatedNotification = NotificationCompat.Builder(nowContext, "1")
                         .setContentTitle("전복사고 발생")
-                        .setContentText("현재 안전하다면 " + (count.value ?: 0).toString() + "초 안에 버튼을 눌러주세요")
+                        .setContentText(
+                            "현재 안전하다면 " + (count.value ?: 0).toString() + "초 안에 버튼을 눌러주세요"
+                        )
                         .setSmallIcon(R.drawable.ic_launcher_background)
                         .setContentIntent(pendingMain)
                         .build()
@@ -181,7 +184,7 @@ class ForegroundService : Service() {
                     } else {
                     }*/
 
-                } else if ((count.value ?: 0)<= 0 && accidentFlag) {
+                } else if ((count.value ?: 0) <= 0 && accidentFlag) {
                     val updatedNotification = NotificationCompat.Builder(nowContext, "1")
                         .setContentTitle("전복사고 발생")
                         .setContentText("정상적으로 신고되었습니다.")
@@ -196,7 +199,10 @@ class ForegroundService : Service() {
 
                     firebase.fetchUserByDocumentId(email) { userInfo ->
                         if (userInfo != null) {
-                            Log.d("[로그]", "사용자 이름: ${userInfo.name}, 나이: ${userInfo.age}, 이메일: ${userInfo.email}")
+                            Log.d(
+                                "[로그]",
+                                "사용자 이름: ${userInfo.name}, 나이: ${userInfo.age}, 이메일: ${userInfo.email}"
+                            )
                             if (ContextCompat.checkSelfPermission(
                                     nowContext,
                                     Manifest.permission.SEND_SMS
@@ -208,11 +214,18 @@ class ForegroundService : Service() {
                                 val smsManager = SmsManager.getDefault()
                                 try {
 
-                                    smsManager.sendTextMessage("+82"+userInfo.emergencyContactList[0], null, "안녕~~~", null,null)
+                                    smsManager.sendTextMessage(
+                                        "+82" + userInfo.emergencyContactList[0],
+                                        null,
+                                        "안녕~~~",
+                                        null,
+                                        null
+                                    )
 
                                 } catch (ex: Exception) {
                                     ex.printStackTrace()
-                                    Toast.makeText(baseContext, ex.message, Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(baseContext, ex.message, Toast.LENGTH_SHORT)
+                                        .show()
                                 }
                             }
 
@@ -220,6 +233,21 @@ class ForegroundService : Service() {
                             Log.d("[로그]", "사용자 정보를 찾을 수 없습니다.")
                         }
                     }
+
+                    bluetoothRepository.readDataFromDevice().collect { location ->
+                        val regex =
+                            Regex("""###latitude:(-?\d+\.?\d*),longitude:(-?\d+\.?\d*)###""")
+                        val matchResult = regex.find(location)
+
+                        if (matchResult != null) {
+                            val (latitude, longitude) = matchResult.destructured
+                            firebase.recordAccidentLocation(
+                                latitude.toDouble(),
+                                longitude.toDouble()
+                            )
+                        }
+                    }
+
                     changeAccidentFlag(false)
 
                 } else {
@@ -240,13 +268,14 @@ class ForegroundService : Service() {
         return START_NOT_STICKY
     }
 
-    private fun timer(){
+    private fun timer() {
 
     }
+
     public fun userSafe() {
         changeAccidentFlag(false)
         count.postValue(20)
-        Log.d("test","foreground")
+        Log.d("test", "foreground")
 
     }
 
