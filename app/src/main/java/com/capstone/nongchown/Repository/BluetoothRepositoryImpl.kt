@@ -8,9 +8,9 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.location.Location
 import android.util.Log
 import com.capstone.nongchown.Constants
-import com.capstone.nongchown.Model.GeoCoordinate
 import com.capstone.nongchown.Utils.GeoConverter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -160,7 +160,7 @@ class BluetoothRepositoryImpl @Inject constructor(
     }
 
     // 단방향으로 data 전달시 Flow로 전달 생산자 (emit)
-    override fun readDataFromDevice(): Flow<GeoCoordinate> = flow {
+    override fun readDataFromDevice(): Flow<Location> = flow {
         Log.d("[로그]", "DATA 수신 대기")
         bluetoothSocket?.let { socket ->
             val inputStream: InputStream = socket.inputStream
@@ -173,7 +173,7 @@ class BluetoothRepositoryImpl @Inject constructor(
                     Log.d("[로그]", "수신된 메시지: $message")
 
                     // message -> GeoCoordinate
-                    val location:GeoCoordinate = geoConverter.convertFromString(message);
+                    val location: Location = geoConverter.convertFromString(message)
                     
                     emit(location)
                     //sendDataToDevice()

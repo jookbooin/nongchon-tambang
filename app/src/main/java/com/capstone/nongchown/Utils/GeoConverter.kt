@@ -1,16 +1,23 @@
 package com.capstone.nongchown.Utils
 
-import com.capstone.nongchown.Model.GeoCoordinate
+import android.location.Location
 
 class GeoConverter {
-    fun convertFromString(input: String): GeoCoordinate {
+    fun convertFromString(input: String): Location {
         val (latitude: Double, longitude: Double) = try {
             formatValidate(input)
         } catch (e: IllegalArgumentException) {
 
-            return GeoCoordinate(37.300392, 127.039766)
+            return Location("").apply {
+                this.latitude = 37.300392
+                this.longitude = 127.039766
+            }
+
         }
-        return GeoCoordinate(latitude, longitude)
+        return Location("").apply {
+            this.latitude = latitude
+            this.longitude = longitude
+        }
     }
 
     private fun formatValidate(input: String): Pair<Double, Double> {
