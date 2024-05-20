@@ -168,6 +168,8 @@ class BluetoothRepositoryImpl @Inject constructor(
                     val message = buffer.decodeToString(endIndex = bytes)
                     Log.d("[로그]", "수신된 메시지: $message")
 
+                    // message -> GeoCoordinate
+                    
                     emit(message)
                     //sendDataToDevice()
                     // message 방출 -> collect에서 수집
