@@ -121,12 +121,9 @@ class ForegroundService : Service() {
         serviceScope.launch {
 
             bluetoothRepository.readDataFromDevice().collect { data ->
-                if (data.isNotEmpty()) {
                     accidentFlag=true
                     showScreen(count.value ?:0)
                     bluetoothRepository.sendDataToDevice()
-                }
-
             }
         }
 
