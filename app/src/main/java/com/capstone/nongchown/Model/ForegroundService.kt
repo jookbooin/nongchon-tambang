@@ -143,17 +143,6 @@ class ForegroundService : Service() {
         }
 
         serviceScope.launch {
-            bluetoothRepository.readDataFromDevice().collect { data ->
-                if (data.isNotEmpty()) {
-                    accidentFlag = true
-                    showScreen(count.value ?: 0)
-                    bluetoothRepository.sendDataToDevice()
-                }
-
-            }
-        }
-
-        serviceScope.launch {
             while (true) {
 
                 if (accidentFlag && (count.value ?: 0) >= 1) {
@@ -260,19 +249,19 @@ class ForegroundService : Service() {
                         }
                     }
 
-                    bluetoothRepository.readDataFromDevice().collect { location ->
-                        val regex =
-                            Regex("""###latitude:(-?\d+\.?\d*),longitude:(-?\d+\.?\d*)###""")
-                        val matchResult = regex.find(location)
-
-                        if (matchResult != null) {
-                            val (latitude, longitude) = matchResult.destructured
-                            firebase.recordAccidentLocation(
-                                latitude.toDouble(),
-                                longitude.toDouble()
-                            )
-                        }
-                    }
+//                    bluetoothRepository.readDataFromDevice().collect { location ->
+//                        val regex =
+//                            Regex("""###latitude:(-?\d+\.?\d*),longitude:(-?\d+\.?\d*)###""")
+//                        val matchResult = regex.find(location)
+//
+//                        if (matchResult != null) {
+//                            val (latitude, longitude) = matchResult.destructured
+//                            firebase.recordAccidentLocation(
+//                                latitude.toDouble(),
+//                                longitude.toDouble()
+//                            )
+//                        }
+//                    }
 
                     changeAccidentFlag(false)
 
