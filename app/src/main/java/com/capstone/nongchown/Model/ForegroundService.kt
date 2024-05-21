@@ -12,6 +12,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
 import android.media.RingtoneManager
+import android.location.Address
 import android.os.Binder
 import android.os.Build
 import android.os.Handler
@@ -28,10 +29,12 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.capstone.nongchown.R
 import com.capstone.nongchown.Repository.BluetoothRepository
+import com.capstone.nongchown.Utils.AddressConverter
 import com.capstone.nongchown.View.Activity.AccidentActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -60,6 +63,8 @@ class ForegroundService : Service() {
     private lateinit var nowContext: Context
     private val binder = LocalBinder()
     private var accidentFlag: Boolean = false
+    private lateinit var addressConverter: AddressConverter
+    var receiveAddress: Address? = null
 
     inner class LocalBinder : Binder() {
         fun getService(): ForegroundService {
@@ -90,12 +95,18 @@ class ForegroundService : Service() {
             // for ActivityCompat#requestPermissions for more details.
             // return
         }
+
+        addressConverter = AddressConverter(nowContext, object : AddressConverter.GeocoderListener {
+            override fun sendAddress(address: Address) {
+                receiveAddress = address
+                Log.d("[로그]", "Address 최신화")
+            }
+        }
+        )
+
     }
     @SuppressLint("ForegroundServiceType", "ServiceCast")
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-
-
-        val nowContext :Context = this
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channelId = "your_general_channel_id"
@@ -104,6 +115,7 @@ class ForegroundService : Service() {
             val channel = NotificationChannel(channelId, channelName, importance)
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
+
         }
 
 // 알림 사운드 URI 설정
@@ -129,18 +141,16 @@ class ForegroundService : Service() {
 
         serviceScope.launch {
 
-            bluetoothRepository.readDataFromDevice().collect { data ->
-                if (data.isNotEmpty()) {
-                    accidentFlag=true
-                    showScreen(count.value ?:0)
-                    bluetoothRepository.sendDataToDevice()
-                }
-
+            bluetoothRepository.readDataFromDevice().collect { location ->
+                accidentFlag = true
+                showScreen(count.value ?: 0)
+                bluetoothRepository.sendDataToDevice()
+                addressConverter.getAddressFromLocation(location) // 성공시 oncreate의 fun sendAddress(address: Address) 로 이동해서 receiveAddress 변경 (비동기..)
             }
         }
 
-        CoroutineScope(Dispatchers.IO).launch {
-            while (true){
+        serviceScope.launch {
+            while (true) {
 
                 if (accidentFlag && (count.value ?: 0) >= 1) {
 
@@ -182,7 +192,7 @@ class ForegroundService : Service() {
 
 
 
-                } else if ((count.value ?: 0)<= 0 && accidentFlag) {
+                } else if ((count.value ?: 0) <= 0 && accidentFlag) {
                     val updatedNotification = NotificationCompat.Builder(nowContext, "1")
                         .setContentTitle("전복사고 발생")
                         .setContentText("정상적으로 신고되었습니다.")
@@ -194,10 +204,15 @@ class ForegroundService : Service() {
 
                     val firebase = FirebaseCommunication()
                     val email = "sanghoo1023@gmail.com"
+                    val accidentAddress = receiveAddress?.let { AddressConverter.convertAddressToString(it) } // 동기화 필요...
+                    Log.d("[로그]","$accidentAddress")
 
                     firebase.fetchUserByDocumentId(email) { userInfo ->
                         if (userInfo != null) {
-                            Log.d("[로그]", "사용자 이름: ${userInfo.name}, 나이: ${userInfo.age}, 이메일: ${userInfo.email}")
+                            Log.d(
+                                "[로그]",
+                                "사용자 이름: ${userInfo.name}, 나이: ${userInfo.age}, 이메일: ${userInfo.email}"
+                            )
                             if (ContextCompat.checkSelfPermission(
                                     nowContext,
                                     Manifest.permission.SEND_SMS
@@ -209,11 +224,20 @@ class ForegroundService : Service() {
                                 val smsManager = SmsManager.getDefault()
                                 try {
 
-                                    smsManager.sendTextMessage("+82"+userInfo.emergencyContactList[0], null, "안녕~~~", null,null)
+
+                                    smsManager.sendTextMessage(
+                                        "+82" + userInfo.emergencyContactList[0],
+                                        null,
+                                        "안녕~~~",
+                                        null,
+                                        null
+                                    )
+
 
                                 } catch (ex: Exception) {
                                     ex.printStackTrace()
-                                    Toast.makeText(baseContext, ex.message, Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(baseContext, ex.message, Toast.LENGTH_SHORT)
+                                        .show()
                                 }
                             }
 
@@ -221,6 +245,21 @@ class ForegroundService : Service() {
                             Log.d("[로그]", "사용자 정보를 찾을 수 없습니다.")
                         }
                     }
+
+//                    bluetoothRepository.readDataFromDevice().collect { location ->
+//                        val regex =
+//                            Regex("""###latitude:(-?\d+\.?\d*),longitude:(-?\d+\.?\d*)###""")
+//                        val matchResult = regex.find(location)
+//
+//                        if (matchResult != null) {
+//                            val (latitude, longitude) = matchResult.destructured
+//                            firebase.recordAccidentLocation(
+//                                latitude.toDouble(),
+//                                longitude.toDouble()
+//                            )
+//                        }
+//                    }
+
                     changeAccidentFlag(false)
 
                 } else {
@@ -241,13 +280,19 @@ class ForegroundService : Service() {
         return START_NOT_STICKY
     }
 
-    private fun timer(){
+
+    override fun onDestroy() {
+        super.onDestroy()
+        serviceScope.cancel()
+    }
+
+    private fun timer() {
 
     }
     public fun userSafe() {
         changeAccidentFlag(false)
         count.postValue(20)
-        Log.d("test","foreground")
+        Log.d("test", "foreground")
 
     }
 
