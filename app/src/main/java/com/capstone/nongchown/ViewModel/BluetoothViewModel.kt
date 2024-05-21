@@ -64,6 +64,7 @@ class BluetoothViewModel @Inject constructor(private val bluetoothRepository: Bl
                 bluetoothRepository.connectToDevice(bluetoothDevice)
                 _connectionStatus.value = true // 연결 성공
             } catch (e: Exception) {
+                Log.e("로그", "블루투스 에러" ,e)
                 Log.d("[로그]", "연결 실패: ${bluetoothDevice.name} : ${bluetoothDevice.address} 페어링 상태 : ${bluetoothDevice.bondState}\n ${e.message}")
                 _connectionStatus.value = false
             }
