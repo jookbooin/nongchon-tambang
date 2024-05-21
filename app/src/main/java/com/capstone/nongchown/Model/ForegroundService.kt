@@ -1,3 +1,4 @@
+
 package com.capstone.nongchown.Model
 
 import android.Manifest
@@ -142,8 +143,8 @@ class ForegroundService : Service() {
             }
         }
 
-        serviceScope.launch {
-            while (true) {
+        CoroutineScope(Dispatchers.IO).launch {
+            while (true){
 
                 if (accidentFlag && (count.value ?: 0) >= 1) {
 
@@ -210,7 +211,10 @@ class ForegroundService : Service() {
 
                     firebase.fetchUserByDocumentId(email) { userInfo ->
                         if (userInfo != null) {
-                            Log.d("[로그]", "사용자 이름: ${userInfo.name}, 나이: ${userInfo.age}, 이메일: ${userInfo.email}")
+                            Log.d(
+                                "[로그]",
+                                "사용자 이름: ${userInfo.name}, 나이: ${userInfo.age}, 이메일: ${userInfo.email}"
+                            )
                             if (ContextCompat.checkSelfPermission(
                                     nowContext,
                                     Manifest.permission.SEND_SMS
@@ -222,11 +226,18 @@ class ForegroundService : Service() {
                                 val smsManager = SmsManager.getDefault()
                                 try {
 
-                                    smsManager.sendTextMessage("+82" + userInfo.emergencyContactList[0], null, "안녕~~~", null, null)
+                                    smsManager.sendTextMessage(
+                                        "+82" + userInfo.emergencyContactList[0],
+                                        null,
+                                        "안녕~~~",
+                                        null,
+                                        null
+                                    )
 
                                 } catch (ex: Exception) {
                                     ex.printStackTrace()
-                                    Toast.makeText(baseContext, ex.message, Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(baseContext, ex.message, Toast.LENGTH_SHORT)
+                                        .show()
                                 }
                             }
 
