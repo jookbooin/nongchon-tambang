@@ -8,8 +8,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.location.Location
 import android.util.Log
 import com.capstone.nongchown.Constants
+import com.capstone.nongchown.Utils.GeoConverter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -35,6 +37,8 @@ class BluetoothRepositoryImpl @Inject constructor(
 
     private var bluetoothSocket: BluetoothSocket? = null
     private var connectedJob: Job? = null
+
+    val geoConverter = GeoConverter()
 
 
     @SuppressLint("MissingPermission")
@@ -156,7 +160,7 @@ class BluetoothRepositoryImpl @Inject constructor(
     }
 
     // 단방향으로 data 전달시 Flow로 전달 생산자 (emit)
-    override fun readDataFromDevice(): Flow<String> = flow {
+    override fun readDataFromDevice(): Flow<Location> = flow {
         Log.d("[로그]", "DATA 수신 대기")
         bluetoothSocket?.let { socket ->
             val inputStream: InputStream = socket.inputStream
@@ -168,7 +172,10 @@ class BluetoothRepositoryImpl @Inject constructor(
                     val message = buffer.decodeToString(endIndex = bytes)
                     Log.d("[로그]", "수신된 메시지: $message")
 
-                    emit(message)
+                    // message -> GeoCoordinate
+                    val location: Location = geoConverter.convertFromString(message)
+                    
+                    emit(location)
                     //sendDataToDevice()
                     // message 방출 -> collect에서 수집
                     /**

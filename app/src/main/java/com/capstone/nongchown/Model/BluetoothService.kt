@@ -79,15 +79,15 @@ class BluetoothService : Service() {
 
         serviceScope.launch {
             bluetoothRepository.readDataFromDevice().collect { data ->
-                if (data.isNotEmpty()) {
-                    showScreen(data)
+//                if (data.isNotEmpty()) {
+//                    showScreen(data)
                     val notiAccidentOccur = NotificationCompat.Builder(nowContext, MAIN_NOTIFICATION)
                         .setContentTitle("전복사고 발생")
                         .setContentText("현재 안전하다면 버튼을 눌러주세요")
                         .setSmallIcon(R.drawable.ic_launcher_background)
                         .build()
                     NotificationManagerCompat.from(nowContext).notify(MAIN_ID, notiAccidentOccur)
-                }
+//                }
             }
         }
 
