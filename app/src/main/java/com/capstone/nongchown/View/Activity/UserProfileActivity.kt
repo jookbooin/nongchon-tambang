@@ -1,16 +1,17 @@
 package com.capstone.nongchown.View.Activity
 
+
+import android.Manifest
 import android.annotation.SuppressLint
+import android.bluetooth.BluetoothAdapter
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.MotionEvent
-
-import android.bluetooth.BluetoothAdapter
-import android.content.Intent
-import android.os.Build
 import android.view.MenuItem
-
+import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -25,16 +26,16 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.children
 import androidx.core.widget.addTextChangedListener
-
-import androidx.lifecycle.lifecycleScope
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.Lifecycle
-
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -42,19 +43,15 @@ import com.capstone.nongchown.Adapter.ConnectedDeviceAdapter
 import com.capstone.nongchown.Model.Enum.BluetoothState
 import com.capstone.nongchown.Model.ForegroundService
 import com.capstone.nongchown.Model.UserInfo
-
 import com.capstone.nongchown.R
 import com.capstone.nongchown.Utils.moveActivity
 import com.capstone.nongchown.Utils.showToast
 import com.capstone.nongchown.ViewModel.BluetoothViewModel
 import com.capstone.nongchown.ViewModel.UserProfileViewModel
-
-import kotlinx.coroutines.launch
-
-
 import com.google.android.material.navigation.NavigationView
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
@@ -81,10 +78,24 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         findViewById(R.id.user_profile_saveButton)
     }
 
+    private val PERMISSIONS_REQUEST_SEND_SMS = 1
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_user_profile)
+
+        // 문자 전송 관련 권한
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.SEND_SMS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {//권한이 없다면
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.SEND_SMS),
+                PERMISSIONS_REQUEST_SEND_SMS
+            )
+        }
 
         pageScroll = findViewById(R.id.user_profile_scroll)
 

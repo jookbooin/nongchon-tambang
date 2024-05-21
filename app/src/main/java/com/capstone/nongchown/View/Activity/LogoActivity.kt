@@ -9,13 +9,11 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import com.capstone.nongchown.Constants
 import com.capstone.nongchown.R
 import com.capstone.nongchown.Utils.showToast
 
 class LogoActivity : ComponentActivity() {
-    private val PERMISSIONS_REQUEST_SEND_SMS = 1
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.title)
@@ -27,18 +25,6 @@ class LogoActivity : ComponentActivity() {
         // 1차 권한 처리 ( 위치 정보, 블루투스 활성화 )
         requestBluetoothPermissions()
 
-        // 문자 전송 관련 권한
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.SEND_SMS
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {//권한이 없다면
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.SEND_SMS),
-                PERMISSIONS_REQUEST_SEND_SMS
-            )
-        }
 
     }
 

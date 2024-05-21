@@ -71,8 +71,6 @@ class AccidentActivity : ComponentActivity() {
         Log.d("test", "accident")
         setContentView(R.layout.accident_notification)
 
-        //foregroundService.
-
 
         val intent = intent
         countData = intent?.getIntExtra("timer", 0)!!
@@ -90,6 +88,7 @@ class AccidentActivity : ComponentActivity() {
                timer--
                updateTimerText(timer)
 
+
            }
        }
 
@@ -101,7 +100,7 @@ class AccidentActivity : ComponentActivity() {
             Log.d("test", "btnON")
             //accidentViewModel.userSafe()
             foregroundService?.userSafe()
-            
+            finish()
             val mainIntent = Intent(this, UserProfileActivity::class.java)
             startActivity(mainIntent)
 
