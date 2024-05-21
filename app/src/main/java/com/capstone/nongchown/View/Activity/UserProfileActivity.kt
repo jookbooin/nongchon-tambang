@@ -1,11 +1,9 @@
 package com.capstone.nongchown.View.Activity
 
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -26,8 +24,6 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -85,17 +81,17 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         setContentView(R.layout.activity_user_profile)
 
         // 문자 전송 관련 권한
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.SEND_SMS
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {//권한이 없다면
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.SEND_SMS),
-                PERMISSIONS_REQUEST_SEND_SMS
-            )
-        }
+//        if (ContextCompat.checkSelfPermission(
+//                this,
+//                Manifest.permission.SEND_SMS
+//            ) != PackageManager.PERMISSION_GRANTED
+//        ) {//권한이 없다면
+//            ActivityCompat.requestPermissions(
+//                this,
+//                arrayOf(Manifest.permission.SEND_SMS),
+//                PERMISSIONS_REQUEST_SEND_SMS
+//            )
+//        }
 
         pageScroll = findViewById(R.id.user_profile_scroll)
 
