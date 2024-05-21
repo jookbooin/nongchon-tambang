@@ -181,44 +181,6 @@ class ForegroundService : Service() {
                     }
 
 
-/*
-                    val updatedNotification = NotificationCompat.Builder(nowContext, "1")
-                        .setContentTitle("전복사고 발생")
-                        .setContentText("현재 안전하다면 " + (count.value ?: 0).toString() + "초 안에 버튼을 눌러주세요")
-                        .setSmallIcon(R.drawable.ic_launcher_background)
-                        .setContentIntent(pendingMain)
-                        .setSound(alarmSound)
-                        .setPriority(NotificationCompat.PRIORITY_HIGH)
-                        .build()
-
-                    if (ActivityCompat.checkSelfPermission(
-                            nowContext,
-                            Manifest.permission.POST_NOTIFICATIONS
-                        ) != PackageManager.PERMISSION_GRANTED
-                    ) {
-
-                        // TODO: Consider calling
-                        //    ActivityCompat#requestPermissions
-                        // here to request the missing permissions, and then overriding
-                        //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                        //                                          int[] grantResults)
-                        // to handle the case where the user grants the permission. See the documentation
-                        // for ActivityCompat#requestPermissions for more details.
-                        // return
-                    }
-
-                    with(NotificationManagerCompat.from(nowContext)) {
-                        notify(1, updatedNotification)
-                    }
-
- */
-                    /*
-                    // 메인 액티비티가 존재하고, 참조가 유효한지 확인
-                    if (accident != null) {
-                        // 데이터 전달
-                        accident.updateTimerText((count.value ?: 0))
-                    } else {
-                    }*/
 
                 } else if ((count.value ?: 0)<= 0 && accidentFlag) {
                     val updatedNotification = NotificationCompat.Builder(nowContext, "1")
