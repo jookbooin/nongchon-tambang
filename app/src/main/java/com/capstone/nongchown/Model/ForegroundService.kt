@@ -11,8 +11,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
-import android.media.RingtoneManager
 import android.location.Address
+import android.media.RingtoneManager
 import android.os.Binder
 import android.os.Build
 import android.os.Handler
@@ -284,6 +284,7 @@ class ForegroundService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         serviceScope.cancel()
+        bluetoothRepository.disconnect()
     }
 
     private fun timer() {
