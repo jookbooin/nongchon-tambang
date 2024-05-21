@@ -8,7 +8,7 @@ class GeoConverter {
         val (latitude: Double, longitude: Double) = try {
             formatValidate(input)
         } catch (e: IllegalArgumentException) {
-            Log.d("[로그]","format 오류.. 처리 보류..")
+            Log.e("[로그]","format 오류.. 처리 보류..",e)
             return Location("").apply {
                 this.latitude = 37.300392
                 this.longitude = 127.039766

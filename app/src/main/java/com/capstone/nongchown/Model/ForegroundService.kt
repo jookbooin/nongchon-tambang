@@ -206,6 +206,7 @@ class ForegroundService : Service() {
                     val firebase = FirebaseCommunication()
                     val email = "sanghoo1023@gmail.com"
                     val accidentAddress = receiveAddress?.let { AddressConverter.convertAddressToString(it) } // 동기화 필요...
+                    Log.d("[로그]","$accidentAddress")
 
                     firebase.fetchUserByDocumentId(email) { userInfo ->
                         if (userInfo != null) {
