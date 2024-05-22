@@ -1,4 +1,3 @@
-
 package com.capstone.nongchown.Model
 
 import android.Manifest
@@ -25,6 +24,8 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.location.component1
+import androidx.core.location.component2
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.capstone.nongchown.R
@@ -75,6 +76,7 @@ class ForegroundService : Service() {
     override fun onBind(intent: Intent?): IBinder? {
         return binder
     }
+
     override fun onCreate() {
         super.onCreate()
         Log.d("[로그]", "서비스 onCreate()")
@@ -105,6 +107,7 @@ class ForegroundService : Service() {
         )
 
     }
+
     @SuppressLint("ForegroundServiceType", "ServiceCast")
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
@@ -113,7 +116,8 @@ class ForegroundService : Service() {
             val channelName = "General Notifications"
             val importance = NotificationManager.IMPORTANCE_HIGH
             val channel = NotificationChannel(channelId, channelName, importance)
-            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val notificationManager =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
 
         }
@@ -167,17 +171,24 @@ class ForegroundService : Service() {
                         PendingIntent.FLAG_IMMUTABLE
                     )
 
-                    val generalNotification2 = NotificationCompat.Builder(nowContext, "your_general_channel_id")
-                        .setContentTitle("전복사고 발생")
-                        .setContentText("현재 안전하다면 " + (count.value ?: 0).toString() + "초 안에 버튼을 눌러주세요")
-                        .setContentIntent(pendingMain)
-                        .setSmallIcon(R.drawable.ic_launcher_background)
-                        .setSound(alarmSound) // 알림에 사운드 추가
-                        .setPriority(NotificationCompat.PRIORITY_HIGH)
-                        .build()
+                    val generalNotification2 =
+                        NotificationCompat.Builder(nowContext, "your_general_channel_id")
+                            .setContentTitle("전복사고 발생")
+                            .setContentText(
+                                "현재 안전하다면 " + (count.value ?: 0).toString() + "초 안에 버튼을 눌러주세요"
+                            )
+                            .setContentIntent(pendingMain)
+                            .setSmallIcon(R.drawable.ic_launcher_background)
+                            .setSound(alarmSound) // 알림에 사운드 추가
+                            .setPriority(NotificationCompat.PRIORITY_HIGH)
+                            .build()
 
                     with(NotificationManagerCompat.from(nowContext)) {
-                        if (ActivityCompat.checkSelfPermission(nowContext, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                        if (ActivityCompat.checkSelfPermission(
+                                nowContext,
+                                Manifest.permission.POST_NOTIFICATIONS
+                            ) != PackageManager.PERMISSION_GRANTED
+                        ) {
                             // TODO: Consider calling
                             //    ActivityCompat#requestPermissions
                             // here to request the missing permissions, and then overriding
@@ -189,7 +200,6 @@ class ForegroundService : Service() {
                         }
                         notify(2, generalNotification2) // 포그라운드 알림과 다른 ID 사용
                     }
-
 
 
                 } else if ((count.value ?: 0) <= 0 && accidentFlag) {
@@ -204,8 +214,9 @@ class ForegroundService : Service() {
 
                     val firebase = FirebaseCommunication()
                     val email = "sanghoo1023@gmail.com"
-                    val accidentAddress = receiveAddress?.let { AddressConverter.convertAddressToString(it) } // 동기화 필요...
-                    Log.d("[로그]","$accidentAddress")
+                    val accidentAddress =
+                        receiveAddress?.let { AddressConverter.convertAddressToString(it) } // 동기화 필요...
+                    Log.d("[로그]", "$accidentAddress")
 
                     firebase.fetchUserByDocumentId(email) { userInfo ->
                         if (userInfo != null) {
@@ -246,19 +257,13 @@ class ForegroundService : Service() {
                         }
                     }
 
-//                    bluetoothRepository.readDataFromDevice().collect { location ->
-//                        val regex =
-//                            Regex("""###latitude:(-?\d+\.?\d*),longitude:(-?\d+\.?\d*)###""")
-//                        val matchResult = regex.find(location)
-//
-//                        if (matchResult != null) {
-//                            val (latitude, longitude) = matchResult.destructured
-//                            firebase.recordAccidentLocation(
-//                                latitude.toDouble(),
-//                                longitude.toDouble()
-//                            )
-//                        }
-//                    }
+                    bluetoothRepository.readDataFromDevice().collect { location ->
+                        val (latitude, longitude) = location
+                        firebase.recordAccidentLocation(
+                            latitude,
+                            longitude
+                        )
+                    }
 
                     changeAccidentFlag(false)
 
@@ -290,6 +295,7 @@ class ForegroundService : Service() {
     private fun timer() {
 
     }
+
     public fun userSafe() {
         changeAccidentFlag(false)
         count.postValue(20)
