@@ -317,8 +317,7 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
             override fun onClick(view: View, position: Int) {
                 checkBluetoothEnabledState {
                     // 1. 우선 실행중인 service 제거
-                    val serviceIntent =
-                        Intent(this@UserProfileActivity, ForegroundService::class.java)
+                    val serviceIntent = Intent(this@UserProfileActivity, ForegroundService::class.java)
                     stopService(serviceIntent)
 
                     // 2. 연결
@@ -333,6 +332,9 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         val btnDeviceDiscovery = navHeader.findViewById<Button>(R.id.btndevicediscovery)
         btnDeviceDiscovery.setOnClickListener {
             checkBluetoothEnabledState {
+                val serviceIntent = Intent(this@UserProfileActivity, ForegroundService::class.java)
+                stopService(serviceIntent)
+
                 drawerLayout.closeDrawer(GravityCompat.START)
                 moveActivity(DeviceDiscoveryActivity::class.java)
             }

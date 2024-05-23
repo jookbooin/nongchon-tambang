@@ -110,6 +110,7 @@ class ForegroundService : Service() {
 
     @SuppressLint("ForegroundServiceType", "ServiceCast")
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.d("[로그]","서비스 시작")
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channelId = "your_general_channel_id"
@@ -236,13 +237,13 @@ class ForegroundService : Service() {
                                 try {
 
 
-                                    smsManager.sendTextMessage(
-                                        "+82" + userInfo.emergencyContactList[0],
-                                        null,
-                                        "안녕~~~",
-                                        null,
-                                        null
-                                    )
+//                                    smsManager.sendTextMessage(
+//                                        "+82" + userInfo.emergencyContactList[0],
+//                                        null,
+//                                        "안녕~~~",
+//                                        null,
+//                                        null
+//                                    )
 
 
                                 } catch (ex: Exception) {
@@ -290,6 +291,7 @@ class ForegroundService : Service() {
         super.onDestroy()
         serviceScope.cancel()
         bluetoothRepository.disconnect()
+        Log.d("[로그]","서비스 종료")
     }
 
     private fun timer() {
