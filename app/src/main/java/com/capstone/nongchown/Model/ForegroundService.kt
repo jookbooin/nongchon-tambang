@@ -1,4 +1,3 @@
-
 package com.capstone.nongchown.Model
 
 import android.Manifest
@@ -12,6 +11,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
 import android.location.Address
+import android.media.RingtoneManager
 import android.os.Binder
 import android.os.Build
 import android.os.Handler
@@ -24,6 +24,8 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.location.component1
+import androidx.core.location.component2
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.capstone.nongchown.R
@@ -54,6 +56,7 @@ class ForegroundService : Service() {
 
     val MAIN_NOTIFICATION = "1"
     val MAIN_ID = 1
+
 
     public var count = MutableLiveData<Int>(20)
     private lateinit var runnable: Runnable
@@ -109,26 +112,33 @@ class ForegroundService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channelName = "count"
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
-            val channel = NotificationChannel("1", channelName, importance).apply {
-                description = "Description of my channel"
-            }
-
+            val channelId = "your_general_channel_id"
+            val channelName = "General Notifications"
+            val importance = NotificationManager.IMPORTANCE_HIGH
+            val channel = NotificationChannel(channelId, channelName, importance)
+            val notificationManager =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
 
         }
 
-        val notiBuilder = NotificationCompat.Builder(this, "1")
-            .setSmallIcon(R.drawable.ic_launcher_background)
+// 알림 사운드 URI 설정
+        val alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+
+// 일반 알림 빌더 설정
+        val generalNotification = NotificationCompat.Builder(this, "your_general_channel_id")
             .setContentTitle("농촌 실행중")
             .setContentText("농촌 서비스가 안전하게 지키고 있습니다.")
+            .setSmallIcon(R.drawable.ic_launcher_background)
+            .setSound(alarmSound) // 알림에 사운드 추가
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+
 
         if (Build.VERSION.SDK_INT < 34) {
-            startForeground(1, notiBuilder.build())
+            startForeground(2, generalNotification.build())
         } else {
             startForeground(
-                1, notiBuilder.build(),
+                2, generalNotification.build(),
                 FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
             )
         }
@@ -143,8 +153,8 @@ class ForegroundService : Service() {
             }
         }
 
-        CoroutineScope(Dispatchers.IO).launch {
-            while (true){
+        serviceScope.launch {
+            while (true) {
 
                 if (accidentFlag && (count.value ?: 0) >= 1) {
 
@@ -161,38 +171,36 @@ class ForegroundService : Service() {
                         PendingIntent.FLAG_IMMUTABLE
                     )
 
-                    val updatedNotification = NotificationCompat.Builder(nowContext, "1")
-                        .setContentTitle("전복사고 발생")
-                        .setContentText("현재 안전하다면 " + (count.value ?: 0).toString() + "초 안에 버튼을 눌러주세요")
-                        .setSmallIcon(R.drawable.ic_launcher_background)
-                        .setContentIntent(pendingMain)
-                        .build()
+                    val generalNotification2 =
+                        NotificationCompat.Builder(nowContext, "your_general_channel_id")
+                            .setContentTitle("전복사고 발생")
+                            .setContentText(
+                                "현재 안전하다면 " + (count.value ?: 0).toString() + "초 안에 버튼을 눌러주세요"
+                            )
+                            .setContentIntent(pendingMain)
+                            .setSmallIcon(R.drawable.ic_launcher_background)
+                            .setSound(alarmSound) // 알림에 사운드 추가
+                            .setPriority(NotificationCompat.PRIORITY_HIGH)
+                            .build()
 
-                    if (ActivityCompat.checkSelfPermission(
-                            nowContext,
-                            Manifest.permission.POST_NOTIFICATIONS
-                        ) != PackageManager.PERMISSION_GRANTED
-                    ) {
-
-                        // TODO: Consider calling
-                        //    ActivityCompat#requestPermissions
-                        // here to request the missing permissions, and then overriding
-                        //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                        //                                          int[] grantResults)
-                        // to handle the case where the user grants the permission. See the documentation
-                        // for ActivityCompat#requestPermissions for more details.
-                        // return
+                    with(NotificationManagerCompat.from(nowContext)) {
+                        if (ActivityCompat.checkSelfPermission(
+                                nowContext,
+                                Manifest.permission.POST_NOTIFICATIONS
+                            ) != PackageManager.PERMISSION_GRANTED
+                        ) {
+                            // TODO: Consider calling
+                            //    ActivityCompat#requestPermissions
+                            // here to request the missing permissions, and then overriding
+                            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                            //                                          int[] grantResults)
+                            // to handle the case where the user grants the permission. See the documentation
+                            // for ActivityCompat#requestPermissions for more details.
+                            //return
+                        }
+                        notify(2, generalNotification2) // 포그라운드 알림과 다른 ID 사용
                     }
 
-                    NotificationManagerCompat.from(nowContext).notify(1, updatedNotification)
-
-                    /*
-                    // 메인 액티비티가 존재하고, 참조가 유효한지 확인
-                    if (accident != null) {
-                        // 데이터 전달
-                        accident.updateTimerText((count.value ?: 0))
-                    } else {
-                    }*/
 
                 } else if ((count.value ?: 0) <= 0 && accidentFlag) {
                     val updatedNotification = NotificationCompat.Builder(nowContext, "1")
@@ -206,8 +214,9 @@ class ForegroundService : Service() {
 
                     val firebase = FirebaseCommunication()
                     val email = "sanghoo1023@gmail.com"
-                    val accidentAddress = receiveAddress?.let { AddressConverter.convertAddressToString(it) } // 동기화 필요...
-                    Log.d("[로그]","$accidentAddress")
+                    val accidentAddress =
+                        receiveAddress?.let { AddressConverter.convertAddressToString(it) } // 동기화 필요...
+                    Log.d("[로그]", "$accidentAddress")
 
                     firebase.fetchUserByDocumentId(email) { userInfo ->
                         if (userInfo != null) {
@@ -226,6 +235,7 @@ class ForegroundService : Service() {
                                 val smsManager = SmsManager.getDefault()
                                 try {
 
+
                                     smsManager.sendTextMessage(
                                         "+82" + userInfo.emergencyContactList[0],
                                         null,
@@ -233,6 +243,7 @@ class ForegroundService : Service() {
                                         null,
                                         null
                                     )
+
 
                                 } catch (ex: Exception) {
                                     ex.printStackTrace()
@@ -245,6 +256,15 @@ class ForegroundService : Service() {
                             Log.d("[로그]", "사용자 정보를 찾을 수 없습니다.")
                         }
                     }
+
+                    bluetoothRepository.readDataFromDevice().collect { location ->
+                        val (latitude, longitude) = location
+                        firebase.recordAccidentLocation(
+                            latitude,
+                            longitude
+                        )
+                    }
+
                     changeAccidentFlag(false)
 
                 } else {
@@ -253,7 +273,7 @@ class ForegroundService : Service() {
                         .setContentText("농촌 서비스가 안전하게 지키고 있습니다.")
                         .setSmallIcon(R.drawable.ic_launcher_background)
                         .build()
-                    NotificationManagerCompat.from(nowContext).notify(1, updatedNotification)
+                    NotificationManagerCompat.from(nowContext).notify(2, updatedNotification)
 
                 }
 
@@ -265,9 +285,11 @@ class ForegroundService : Service() {
         return START_NOT_STICKY
     }
 
+
     override fun onDestroy() {
         super.onDestroy()
         serviceScope.cancel()
+        bluetoothRepository.disconnect()
     }
 
     private fun timer() {
