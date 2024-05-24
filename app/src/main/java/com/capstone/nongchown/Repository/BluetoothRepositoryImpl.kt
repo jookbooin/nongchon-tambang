@@ -105,18 +105,28 @@ class BluetoothRepositoryImpl @Inject constructor(
          * 순차적 실행 표현 가능
          * */
         withContext(Dispatchers.IO) {
-            Log.d("[로그]", "[ ${Thread.currentThread().name} ] - [ $coroutineContext ]")
+            Log.d("[로그]", "[ Dispatchers.IO 내부 : ${Thread.currentThread().name} ] - [ $coroutineContext ]")
             if (bluetoothSocket != null) {
                 disconnect()
             }
             bluetoothSocket = createBluetoothSocket(bluetoothDevice)
             Log.d("[로그]", "연결 시작 전: ${bluetoothDevice.name} : ${bluetoothDevice.address} 페어링 상태 : ${bluetoothDevice.bondState}")
-            bluetoothSocket?.connect()
-            Log.d("[로그]", "연결 성공: ${bluetoothDevice.name} : ${bluetoothDevice.address} 페어링 상태 : ${bluetoothDevice.bondState}")
+
+            if(bluetoothSocket != null){
+                try {
+                    Log.d("[로그]", "bluetoothSocket != null")
+                    bluetoothSocket!!.connect()
+                    Log.d("[로그]", "연결 성공: ${bluetoothDevice.name} : ${bluetoothDevice.address} 페어링 상태 : ${bluetoothDevice.bondState}")
+                } catch (e: IOException) {
+                    Log.e("[로그]", "블루투스 소켓 연결 실패", e)
+                    throw e
+                }
+            }else{
+                throw IllegalArgumentException("bluetoothSocket null")
+            }
         }
 
-        Log.d("[로그]", "[ ${Thread.currentThread().name} ] - [ $coroutineContext ]")
-        connectedJob?.cancel()
+        Log.d("[로그]", "[ Dispatchers.IO 외부 : ${Thread.currentThread().name} ] - [ $coroutineContext ]")
     }
 
     @SuppressLint("MissingPermission")
@@ -176,7 +186,6 @@ class BluetoothRepositoryImpl @Inject constructor(
                     val location: Location = geoConverter.convertFromString(message)
                     
                     emit(location)
-                    //sendDataToDevice()
                     // message 방출 -> collect에서 수집
                     /**
                      * 데이터가 1번만 들어오도록 앱에서 처리해야 하는 경우
