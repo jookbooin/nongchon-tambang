@@ -35,7 +35,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.capstone.nongchown.Adapter.ConnectedDeviceAdapter
+import com.capstone.nongchown.Adapter.PairedDeviceAdapter
 import com.capstone.nongchown.Model.Enum.BluetoothState
 import com.capstone.nongchown.Model.ForegroundService
 import com.capstone.nongchown.Model.ForegroundService.Companion.isServiceRunning
@@ -55,7 +55,7 @@ import kotlinx.coroutines.launch
 class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
     val bluetoothViewModel by viewModels<BluetoothViewModel>()
-    lateinit var connectedDeviceAdapter: ConnectedDeviceAdapter
+    lateinit var pairedDeviceAdapter: PairedDeviceAdapter
     lateinit var recyclerView: RecyclerView
 
     private val userprofileViewModel = UserProfileViewModel()
@@ -158,11 +158,7 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
 
                 val userInfo = UserProfileViewModel().userProfileSave(
                     UserInfo(
-                        userName.text.toString(),
-                        userEmail.text.toString(),
-                        userAge.text.toString(),
-                        userGender.selectedItem.toString(),
-                        emergencyContactList
+                        userName.text.toString(), userEmail.text.toString(), userAge.text.toString(), userGender.selectedItem.toString(), emergencyContactList
                     )
                 )
                 name = userInfo.name
@@ -190,11 +186,7 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
 
         //        앱 시작 시 데이터베이스로부터 사용자 데이터를 받아온다.(있다고 가정)
         initUserInfo(
-            userName,
-            userEmail,
-            userAge,
-            userGender,
-            emergencyContacts
+            userName, userEmail, userAge, userGender, emergencyContacts
         )
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.user_profile)) { v, insets ->
@@ -211,11 +203,7 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
     }
 
     private fun initUserInfo(
-        userName: EditText,
-        userEmail: EditText,
-        userAge: EditText,
-        userGender: Spinner,
-        emergencyContacts: LinearLayout
+        userName: EditText, userEmail: EditText, userAge: EditText, userGender: Spinner, emergencyContacts: LinearLayout
     ) {
 
         Log.d("[로그]", "initializing")
@@ -239,8 +227,7 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
     @SuppressLint("ClickableViewAccessibility")
     private fun addEmergencyContact(emergencyContacts: LinearLayout, emergencyContact: String) {
         val inflater = LayoutInflater.from(this)
-        val eContact =
-            inflater.inflate(R.layout.emergency_contact_item, emergencyContacts, false) as EditText
+        val eContact = inflater.inflate(R.layout.emergency_contact_item, emergencyContacts, false) as EditText
 
         eContact.addTextChangedListener {
             Log.d("[로그]", "emergencyContact changed")
@@ -269,14 +256,13 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         return false
     }
 
-    val startForResult =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
-            if (result.resultCode == RESULT_OK) {
-                Log.d("[로그]", "블루투스 활성화")
-            } else if (result.resultCode == RESULT_CANCELED) {
-                Log.d("[로그]", "사용자 블루투스 활성화 거부")
-            }
+    val startForResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+        if (result.resultCode == RESULT_OK) {
+            Log.d("[로그]", "블루투스 활성화")
+        } else if (result.resultCode == RESULT_CANCELED) {
+            Log.d("[로그]", "사용자 블루투스 활성화 거부")
         }
+    }
 
     private fun clickAndOpenSideBar() {
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
@@ -284,11 +270,7 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         val toggle = ActionBarDrawerToggle(
-            this,
-            drawerLayout,
-            toolbar,
-            R.string.open_nav,
-            R.string.close_nav
+            this, drawerLayout, toolbar, R.string.open_nav, R.string.close_nav
         )
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
@@ -313,8 +295,7 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
     }
 
     private fun connectDevice() {
-
-        connectedDeviceAdapter.itemClick = object : ConnectedDeviceAdapter.ItemClick {
+        pairedDeviceAdapter.itemClick = object : PairedDeviceAdapter.ItemClick {
 
             override fun onClick(view: View, position: Int) {
                 checkBluetoothEnabledState {
@@ -350,17 +331,17 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
 
     fun pairedDevices(navHeader: View) {
         recyclerView = navHeader.findViewById(R.id.paireddevice)
-        connectedDeviceAdapter = ConnectedDeviceAdapter(emptyList())
+        pairedDeviceAdapter = PairedDeviceAdapter(emptyList())
 
         recyclerView.apply {
-            adapter = connectedDeviceAdapter
+            adapter = pairedDeviceAdapter
             layoutManager = LinearLayoutManager(this@UserProfileActivity)
         }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 bluetoothViewModel.pairedDevices.collect { devices ->
-                    connectedDeviceAdapter.updateDevices(devices)
+                    pairedDeviceAdapter.updateDevices(devices)
                 }
             }
         }
@@ -400,7 +381,7 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
     }
 
     suspend fun attemptConnectToDevice(position: Int) {
-        val device = connectedDeviceAdapter.getDeviceAtPosition(position)
+        val device = pairedDeviceAdapter.getDeviceAtPosition(position)
         val flag = bluetoothViewModel.connectToDevice(device)
         delay(700)
         handleConnectionResult(flag)
