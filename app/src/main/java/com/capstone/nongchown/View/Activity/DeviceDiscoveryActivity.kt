@@ -17,7 +17,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.capstone.nongchown.Adapter.DiscoveredDeviceAdapter
-import com.capstone.nongchown.Model.BluetoothService
 import com.capstone.nongchown.Model.ForegroundService
 import com.capstone.nongchown.R
 import com.capstone.nongchown.Utils.showToast
@@ -117,13 +116,20 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
         discovredDeviceAdapter.itemClick = object : DiscoveredDeviceAdapter.ItemClick {
 
             override fun onClick(view: View, position: Int) {
+                lifecycleScope.launch {
+                    if (ForegroundService.isServiceRunning()){
+                        Log.d("[로그]", "연결 시킬 기기 눌렀을 때 - 서비스 상태 : ${ForegroundService.isServiceRunning()}")
+                        stopForegroundService()
+                        Log.d("[로그]", "종료 후 서비스 상태 : ${ForegroundService.isServiceRunning()}")
 
-                // service가 시작되어 있다면 종료
-                val serviceIntent = Intent(this@DeviceDiscoveryActivity, BluetoothService::class.java)
-                stopService(serviceIntent)
-
-                val device = discovredDeviceAdapter.getDeviceAtPosition(position)
-                //                bluetoothViewModel.connectToDevice(device)
+                        if (!ForegroundService.isServiceRunning()) {
+                            attemptConnectToDevice(position)
+                        }
+                    }else{
+                        Log.d("[로그]", "연결 시킬 눌렀을 때 - 서비스 상태 : ${ForegroundService.isServiceRunning()}")
+                        attemptConnectToDevice(position)
+                    }
+                }
             }
         }
     }
@@ -161,8 +167,10 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
     fun handleConnectionResult(flag: Boolean) {
         if (flag) {
             showToast("연결되었습니다.")
+            finish()
             startForegroundService()
         } else {
+            Log.d("[로그]","연결 실패")
             showToast("연결 실패했습니다.")
         }
     }
