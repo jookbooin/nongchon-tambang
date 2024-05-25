@@ -48,8 +48,19 @@ class ForegroundService : Service() {
 
     private val serviceScope = CoroutineScope(Dispatchers.IO)
 
-    //    private var startMode: Int = 0             // 서비스가 kill 될 때, 어떻게 동작할지를 나타냄
-//    private var binder: IBinder? = null        // bind 된 클라이언트와 소통하기 위한 인터페이스
+    companion object {
+        @Volatile
+        private var runningServiceCnt = 0
+
+        fun getRunningServiceCnt() = runningServiceCnt
+
+        fun setRunningServiceCnt(state: Int) {
+            synchronized(this) {
+                runningServiceCnt = state
+            }
+        }
+    }
+
     private var allowRebind: Boolean = false   // onRebind() 메소드가 사용될지 말지를 결정함
 
     private lateinit var notificationManager: NotificationManager
