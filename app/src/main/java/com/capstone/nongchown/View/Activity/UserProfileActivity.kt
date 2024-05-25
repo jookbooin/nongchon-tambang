@@ -38,6 +38,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.capstone.nongchown.Adapter.ConnectedDeviceAdapter
 import com.capstone.nongchown.Model.Enum.BluetoothState
 import com.capstone.nongchown.Model.ForegroundService
+import com.capstone.nongchown.Model.ForegroundService.Companion.isServiceRunning
+import com.capstone.nongchown.Model.ForegroundService.Companion.setServiceState
 import com.capstone.nongchown.Model.UserInfo
 import com.capstone.nongchown.R
 import com.capstone.nongchown.Utils.moveActivity
@@ -308,21 +310,29 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         addNewDevices(navHeader)
         pairedDevices(navHeader)
         connectDevice()
-        showConnectSuccessMessage()
     }
 
     private fun connectDevice() {
+
         connectedDeviceAdapter.itemClick = object : ConnectedDeviceAdapter.ItemClick {
 
             override fun onClick(view: View, position: Int) {
                 checkBluetoothEnabledState {
-                    // 1. 우선 실행중인 service 제거
-                    val serviceIntent = Intent(this@UserProfileActivity, ForegroundService::class.java)
-                    stopService(serviceIntent)
+                    lifecycleScope.launch {
+                        if (isServiceRunning()) {
+                            Log.d("[로그]", "페어링 기기 눌렀을 때 - 서비스 상태 : ${isServiceRunning()}")
+                            stopForegroundService()
+                            Log.d("[로그]", "종료 후 서비스 상태 : ${isServiceRunning()}")
 
-                    // 2. 연결
-                    val device = connectedDeviceAdapter.getDeviceAtPosition(position)
-                    bluetoothViewModel.connectToDevice(device)
+                            if (!isServiceRunning()) {
+                                attemptConnectToDevice(position)
+                            }
+
+                        } else {
+                            Log.d("[로그]", "페어링 기기 눌렀을 때 - 서비스 상태 : ${isServiceRunning()}")
+                            attemptConnectToDevice(position)
+                        }
+                    }
                 }
             }
         }
@@ -332,9 +342,6 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         val btnDeviceDiscovery = navHeader.findViewById<Button>(R.id.btndevicediscovery)
         btnDeviceDiscovery.setOnClickListener {
             checkBluetoothEnabledState {
-                val serviceIntent = Intent(this@UserProfileActivity, ForegroundService::class.java)
-                stopService(serviceIntent)
-
                 drawerLayout.closeDrawer(GravityCompat.START)
                 moveActivity(DeviceDiscoveryActivity::class.java)
             }
@@ -376,26 +383,36 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         }
     }
 
-    private fun showConnectSuccessMessage() {
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                bluetoothViewModel.connectionStatus.collect { isConnected ->
-                    if (isConnected) {
-                        showToast("연결되었습니다.")
-                        delay(1000)
-                        startBluetoothService()
-                    }
-                }
-            }
-        }
-    }
-
-    private fun startBluetoothService() {
+    private fun startForegroundService() {
         val serviceIntent = Intent(this, ForegroundService::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(serviceIntent)
         } else {
             startService(serviceIntent)
+        }
+        setServiceState(true)
+    }
+
+    private fun stopForegroundService() {
+        val serviceIntent = Intent(this@UserProfileActivity, ForegroundService::class.java)
+        stopService(serviceIntent)
+        setServiceState(false)
+    }
+
+    suspend fun attemptConnectToDevice(position: Int) {
+        val device = connectedDeviceAdapter.getDeviceAtPosition(position)
+        val flag = bluetoothViewModel.connectToDevice(device)
+        delay(700)
+        handleConnectionResult(flag)
+    }
+
+    fun handleConnectionResult(flag: Boolean) {
+        if (flag) {
+            showToast("연결되었습니다.")
+            drawerLayout.closeDrawer(GravityCompat.START)
+            startForegroundService()
+        } else {
+            showToast("연결 실패했습니다.")
         }
     }
 

@@ -20,12 +20,10 @@ import com.capstone.nongchown.Adapter.DeviceAdapter
 import com.capstone.nongchown.Model.BluetoothService
 import com.capstone.nongchown.Model.ForegroundService
 import com.capstone.nongchown.R
-import com.capstone.nongchown.Utils.showToast
 import com.capstone.nongchown.ViewModel.BluetoothViewModel
 import com.capstone.nongchown.ViewModel.BluetoothViewModel.DiscoveryState
 import com.capstone.nongchown.databinding.ActivityDeviceDiscoveryBinding
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -68,7 +66,7 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
                 stopService(serviceIntent)
 
                 val device = deviceAdapter.getDeviceAtPosition(position)
-                bluetoothViewModel.connectToDevice(device)
+//                bluetoothViewModel.connectToDevice(device)
             }
         }
     }
@@ -118,15 +116,15 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
     private fun showConnectSuccessMessage() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                bluetoothViewModel.connectionStatus.collect { isConnected ->
-                    if (isConnected) {
-                        showToast("연결되었습니다.")
-                        delay(1000)
-                        startBluetoothService()
-                        bluetoothViewModel.cancelBluetoothDiscovery()
-                        finish()
-                    }
-                }
+//                bluetoothViewModel.connectionStatus.collect { isConnected ->
+//                    if (isConnected) {
+//                        showToast("연결되었습니다.")
+//                        delay(1000)
+//                        startBluetoothService()
+//                        bluetoothViewModel.cancelBluetoothDiscovery()
+//                        finish()
+//                    }
+//                }
             }
         }
     }

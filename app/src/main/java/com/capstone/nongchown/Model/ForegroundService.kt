@@ -24,8 +24,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import androidx.core.location.component1
-import androidx.core.location.component2
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.capstone.nongchown.R
@@ -50,13 +48,13 @@ class ForegroundService : Service() {
 
     companion object {
         @Volatile
-        private var runningServiceCnt = 0
+        private var runningServiceState = false     // 메모리로 접근
 
-        fun getRunningServiceCnt() = runningServiceCnt
+        fun isServiceRunning() = runningServiceState
 
-        fun setRunningServiceCnt(state: Int) {
+        fun setServiceState(flag: Boolean) {
             synchronized(this) {
-                runningServiceCnt = state
+                runningServiceState = flag
             }
         }
     }
@@ -269,13 +267,13 @@ class ForegroundService : Service() {
                         }
                     }
 
-                    bluetoothRepository.readDataFromDevice().collect { location ->
-                        val (latitude, longitude) = location
-                        firebase.recordAccidentLocation(
-                            latitude,
-                            longitude
-                        )
-                    }
+//                    bluetoothRepository.readDataFromDevice().collect { location ->
+//                        val (latitude, longitude) = location
+//                        firebase.recordAccidentLocation(
+//                            latitude,
+//                            longitude
+//                        )
+//                    }
 
                     changeAccidentFlag(false)
 

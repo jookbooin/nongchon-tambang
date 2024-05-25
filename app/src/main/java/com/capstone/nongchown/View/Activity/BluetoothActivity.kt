@@ -27,7 +27,6 @@ import com.capstone.nongchown.Utils.showToast
 import com.capstone.nongchown.ViewModel.BluetoothViewModel
 import com.capstone.nongchown.databinding.ActivityBluetoothBinding
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 
@@ -59,7 +58,7 @@ class BluetoothActivity : AppCompatActivity(){
 
                 // 2. 연결
                 val device = deviceAdapter.getDeviceAtPosition(position)
-                bluetoothViewModel.connectToDevice(device)
+//                bluetoothViewModel.connectToDevice(device)
             }
         }
 
@@ -141,13 +140,13 @@ class BluetoothActivity : AppCompatActivity(){
     private fun showConnectSuccessMessage() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                bluetoothViewModel.connectionStatus.collect { isConnected ->
-                    if (isConnected) {
-                        showToast("연결되었습니다.")
-                        delay(1000)
-                        startBluetoothService()
-                    }
-                }
+//                bluetoothViewModel.connectionStatus.collect { isConnected ->
+//                    if (isConnected) {
+//                        showToast("연결되었습니다.")
+//                        delay(1000)
+//                        startBluetoothService()
+//                    }
+//                }
             }
         }
     }
