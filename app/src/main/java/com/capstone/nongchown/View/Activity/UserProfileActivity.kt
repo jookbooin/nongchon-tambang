@@ -37,6 +37,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.capstone.nongchown.Adapter.PairedDeviceAdapter
 import com.capstone.nongchown.Model.Enum.BluetoothState
+import com.capstone.nongchown.Model.Enum.ConnectResult
 import com.capstone.nongchown.Model.ForegroundService
 import com.capstone.nongchown.Model.ForegroundService.Companion.isServiceRunning
 import com.capstone.nongchown.Model.ForegroundService.Companion.setServiceState
@@ -387,13 +388,15 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         handleConnectionResult(flag)
     }
 
-    fun handleConnectionResult(flag: Boolean) {
-        if (flag) {
+    fun handleConnectionResult(flag: ConnectResult) {
+        if (flag == ConnectResult.CONNECT) {
             showToast("연결되었습니다.")
             drawerLayout.closeDrawer(GravityCompat.START)
             startForegroundService()
-        } else {
+        } else if (flag == ConnectResult.DISCONNECT) {
             showToast("연결 실패했습니다.")
+        }else{
+
         }
     }
 

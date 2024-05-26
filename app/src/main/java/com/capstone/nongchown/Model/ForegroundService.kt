@@ -119,6 +119,7 @@ class ForegroundService : Service() {
 
     @SuppressLint("ForegroundServiceType", "ServiceCast")
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        setServiceState(true)
         Log.d("[로그]","서비스 시작")
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
