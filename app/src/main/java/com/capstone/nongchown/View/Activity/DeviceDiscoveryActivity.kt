@@ -17,6 +17,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.capstone.nongchown.Adapter.DiscoveredDeviceAdapter
+import com.capstone.nongchown.Model.Enum.ConnectResult
 import com.capstone.nongchown.Model.ForegroundService
 import com.capstone.nongchown.R
 import com.capstone.nongchown.Utils.showToast
@@ -117,7 +118,7 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
 
             override fun onClick(view: View, position: Int) {
                 lifecycleScope.launch {
-                    if (ForegroundService.isServiceRunning()){
+                    if (ForegroundService.isServiceRunning()) {
                         Log.d("[로그]", "연결 시킬 기기 눌렀을 때 - 서비스 상태 : ${ForegroundService.isServiceRunning()}")
                         stopForegroundService()
                         Log.d("[로그]", "종료 후 서비스 상태 : ${ForegroundService.isServiceRunning()}")
@@ -125,7 +126,7 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
                         if (!ForegroundService.isServiceRunning()) {
                             attemptConnectToDevice(position)
                         }
-                    }else{
+                    } else {
                         Log.d("[로그]", "연결 시킬 눌렀을 때 - 서비스 상태 : ${ForegroundService.isServiceRunning()}")
                         attemptConnectToDevice(position)
                     }
@@ -136,7 +137,6 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
 
     fun cancelDiscovery() {
         binding.btncanceldiscovery.setOnClickListener() {
-            bluetoothViewModel.cancelBluetoothDiscovery()
             finish()
         }
     }
@@ -164,13 +164,13 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
         handleConnectionResult(flag)
     }
 
-    fun handleConnectionResult(flag: Boolean) {
-        if (flag) {
+    fun handleConnectionResult(flag: ConnectResult) {
+        if (flag == ConnectResult.CONNECT) {
             showToast("연결되었습니다.")
             finish()
             startForegroundService()
-        } else {
-            Log.d("[로그]","연결 실패")
+        } else if(flag == ConnectResult.DISCONNECT) {
+            Log.d("[로그]", "연결 실패")
             showToast("연결 실패했습니다.")
         }
     }
