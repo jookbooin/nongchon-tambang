@@ -11,7 +11,7 @@ interface BluetoothRepository {
     fun getPairedDevices(): StateFlow<List<BluetoothDevice>>
     suspend fun connectToDevice(bluetoothDevice: BluetoothDevice)
     fun stopDiscovery()
-    fun cancelDiscovery()
+//    fun cancelDiscovery()
     suspend fun sendDataToDevice()
     fun readDataFromDevice() : Flow<Location>
     fun isBluetoothEnabled(): Boolean

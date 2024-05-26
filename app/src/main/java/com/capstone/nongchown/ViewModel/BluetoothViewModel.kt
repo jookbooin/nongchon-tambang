@@ -5,7 +5,9 @@ import android.bluetooth.BluetoothDevice
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.capstone.nongchown.Exception.BondException
 import com.capstone.nongchown.Model.Enum.BluetoothState
+import com.capstone.nongchown.Model.Enum.ConnectResult
 import com.capstone.nongchown.Repository.BluetoothRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,10 +23,6 @@ class BluetoothViewModel @Inject constructor(private val bluetoothRepository: Bl
     // UIstate
     private val _bluetoothDiscoveryState = MutableStateFlow<DiscoveryState>(DiscoveryState.Loading) // 내부 상태를 변경할 수 있는 StateFlow
     val bluetoothDiscoveryState: StateFlow<DiscoveryState> = _bluetoothDiscoveryState.asStateFlow() // // 외부에 노출된 관찰 전용 -> 독하고 있는 컴포넌트에 변경 사항을 전파
-
-    // 연결 상태 status
-//    private val _connectionStatus = MutableStateFlow(false) // 기본값으로 false
-//    val connectionStatus: StateFlow<Boolean> = _connectionStatus.asStateFlow()
 
     val _pairedDevices = MutableStateFlow<List<BluetoothDevice>>(emptyList())
     val pairedDevices: StateFlow<List<BluetoothDevice>> = _pairedDevices
@@ -49,25 +47,20 @@ class BluetoothViewModel @Inject constructor(private val bluetoothRepository: Bl
         }
     }
 
-    fun stopBluetoothDiscovery() {
-        bluetoothRepository.stopDiscovery()
-    }
-
-    fun cancelBluetoothDiscovery() {
-        bluetoothRepository.cancelDiscovery()
-    }
 
     @SuppressLint("MissingPermission")
-    suspend fun connectToDevice(bluetoothDevice: BluetoothDevice) : Boolean{
+    suspend fun connectToDevice(bluetoothDevice: BluetoothDevice) : ConnectResult {
         return withContext(viewModelScope.coroutineContext) {
             try {
                 bluetoothRepository.connectToDevice(bluetoothDevice)
-                true
-            } catch (e: Exception) {
+                ConnectResult.CONNECT
+            } catch(e: BondException){
+                Log.e("로그", "BOND_NONE", e)
+                ConnectResult.BOND_NONE
+            }catch (e: Exception) {
                 Log.e("로그", "블루투스 에러", e)
                 Log.d("[로그]", "연결 실패: ${bluetoothDevice.name} : ${bluetoothDevice.address} 페어링 상태 : ${bluetoothDevice.bondState}\n ${e.message}")
-//                _connectionStatus.value = false
-                false
+                ConnectResult.DISCONNECT
             }
         }
     }
@@ -101,7 +94,9 @@ class BluetoothViewModel @Inject constructor(private val bluetoothRepository: Bl
         return BluetoothState.ENABLED      // ENABLED
     }
 
-
+    fun stopBluetoothDiscovery() {
+        bluetoothRepository.stopDiscovery()
+    }
 
 
     sealed class DiscoveryState {
