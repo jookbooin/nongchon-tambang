@@ -293,6 +293,15 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         addNewDevices(navHeader)
         pairedDevices(navHeader)
         connectDevice()
+        
+        // 서비스 종료
+        val disconnectView = navHeader.findViewById<View>(R.id.disconnect)
+        disconnectView.setOnClickListener{
+            if (isServiceRunning()){
+                stopForegroundService()
+                showToast("모든 연결을 종료합니다.")
+            }
+        }
     }
 
     private fun connectDevice() {
