@@ -23,7 +23,7 @@ class AccidentActivity : ComponentActivity() {
 
     val accidentViewModel by viewModels<AccidentViewModel>()
     var timer =0
-
+    private lateinit var nowContext: Context
     companion object {
         private var instance: AccidentActivity? = null
 
@@ -64,7 +64,7 @@ class AccidentActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         instance = this
-
+        nowContext=this
         val serviceIntent=Intent(this, ForegroundService::class.java)
         bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE)
 
@@ -90,6 +90,8 @@ class AccidentActivity : ComponentActivity() {
 
 
            }
+           val userIntent = Intent(nowContext, UserProfileActivity::class.java)
+           startActivity(userIntent)
        }
 
 

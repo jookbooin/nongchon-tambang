@@ -219,6 +219,7 @@ class ForegroundService : Service() {
                         receiveAddress?.let { AddressConverter.convertAddressToString(it) } // 동기화 필요...
                     Log.d("[로그]", "$accidentAddress")
 
+
                     firebase.fetchUserByDocumentId(email) { userInfo ->
                         if (userInfo != null) {
                             Log.d(
@@ -237,13 +238,13 @@ class ForegroundService : Service() {
                                 try {
 
 
-//                                    smsManager.sendTextMessage(
-//                                        "+82" + userInfo.emergencyContactList[0],
-//                                        null,
-//                                        "안녕~~~",
-//                                        null,
-//                                        null
-//                                    )
+                                    smsManager.sendTextMessage(
+                                        "+82" + userInfo.emergencyContactList[0],
+                                        null,
+                                        "$accidentAddress",
+                                        null,
+                                        null
+                                    )
 
 
                                 } catch (ex: Exception) {
@@ -256,6 +257,9 @@ class ForegroundService : Service() {
                         } else {
                             Log.d("[로그]", "사용자 정보를 찾을 수 없습니다.")
                         }
+
+                        changeAccidentFlag(false)
+                        count.value=20
                     }
 
                     bluetoothRepository.readDataFromDevice().collect { location ->
@@ -266,7 +270,7 @@ class ForegroundService : Service() {
                         )
                     }
 
-                    changeAccidentFlag(false)
+
 
                 } else {
                     val updatedNotification = NotificationCompat.Builder(nowContext, "1")
