@@ -12,6 +12,7 @@ import android.location.Location
 import android.util.Log
 import com.capstone.nongchown.Constants
 import com.capstone.nongchown.Exception.BondException
+import com.capstone.nongchown.Model.PairedBluetoothDevice
 import com.capstone.nongchown.Utils.GeoConverter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -35,6 +36,7 @@ class BluetoothRepositoryImpl @Inject constructor(
 
     private val _discoveredDeviceList = MutableStateFlow<List<BluetoothDevice>>(emptyList())
     private val _pairedDeviceList = MutableStateFlow<List<BluetoothDevice>>(emptyList())
+    private val _pairedDeviceList2 = MutableStateFlow<List<PairedBluetoothDevice>>(emptyList())
 
     private var bluetoothSocket: BluetoothSocket? = null
 
@@ -72,6 +74,7 @@ class BluetoothRepositoryImpl @Inject constructor(
 
             pairedDevices.forEach { device ->
                 Log.d("[로그]", "페어링 되어있는 기기 ( Name: ${device.name}, Address: ${device.address} )")
+                val m = device.javaClass.getMethod("isConnected")
             }
 
             _pairedDeviceList.value = pairedDevices.toList()
@@ -79,6 +82,32 @@ class BluetoothRepositoryImpl @Inject constructor(
             // Bluetooth is not supported on this device
         }
         return _pairedDeviceList
+    }
+
+    @SuppressLint("MissingPermission")
+    override fun getPairedDevices2(): StateFlow<List<PairedBluetoothDevice>> {
+        Log.d("[로그]", "GET PAIRED DEVICES")
+
+        if (bluetoothAdapter != null) {
+            // Ensure Bluetooth is enabled
+            if (!bluetoothAdapter.isEnabled) {
+                // You might want to prompt the user to enable Bluetooth
+            }
+            // Get the list of paired devices
+            val pairedDevices: Set<BluetoothDevice> = bluetoothAdapter.bondedDevices
+
+            val pairedBluetoothDevices = pairedDevices.map { device ->
+                Log.d("[로그]", "페어링 되어있는 기기 ( Name: ${device.name}, Address: ${device.address} )")
+                val m = device.javaClass.getMethod("isConnected")
+                val connected = m.invoke(device) as Boolean
+                PairedBluetoothDevice(device, connected)
+            }
+
+            _pairedDeviceList2.value = pairedBluetoothDevices.toList()
+        } else {
+
+        }
+        return _pairedDeviceList2
     }
 
     /***

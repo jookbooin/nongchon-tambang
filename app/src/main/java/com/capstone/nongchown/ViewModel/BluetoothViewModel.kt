@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.capstone.nongchown.Exception.BondException
 import com.capstone.nongchown.Model.Enum.BluetoothState
 import com.capstone.nongchown.Model.Enum.ConnectResult
+import com.capstone.nongchown.Model.PairedBluetoothDevice
 import com.capstone.nongchown.Repository.BluetoothRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,6 +28,9 @@ class BluetoothViewModel @Inject constructor(private val bluetoothRepository: Bl
     val _pairedDevices = MutableStateFlow<List<BluetoothDevice>>(emptyList())
     val pairedDevices: StateFlow<List<BluetoothDevice>> = _pairedDevices
 
+    val _pairedDevices2 = MutableStateFlow<List<PairedBluetoothDevice>>(emptyList())
+    val pairedDevices2: StateFlow<List<PairedBluetoothDevice>> = _pairedDevices2
+
     fun loadingDiscovery() {
         _bluetoothDiscoveryState.value = DiscoveryState.Loading
     }
@@ -43,6 +47,14 @@ class BluetoothViewModel @Inject constructor(private val bluetoothRepository: Bl
         viewModelScope.launch {
             bluetoothRepository.getPairedDevices().collect { pairedDevices ->
                 _pairedDevices.value = pairedDevices
+            }
+        }
+    }
+
+    fun getPairedDevices2() {
+        viewModelScope.launch {
+            bluetoothRepository.getPairedDevices2().collect { pairedBluetoothDevices ->
+                _pairedDevices2.value = pairedBluetoothDevices
             }
         }
     }

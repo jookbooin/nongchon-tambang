@@ -20,8 +20,9 @@
         android:singleLine="true"/>
 
     <View
+        android:id="@+id/connectState"
         android:layout_width="24dp"
         android:layout_height="24dp"
         android:layout_marginStart="10dp"
-        android:background="@drawable/circle_shape"/>
+        android:background="@drawable/gray_circle_shape"/>
 </LinearLayout>
