@@ -11,6 +11,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
 import android.location.Address
+import android.location.Location
 import android.media.RingtoneManager
 import android.os.Binder
 import android.os.Build
@@ -34,6 +35,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -74,7 +76,8 @@ class ForegroundService : Service() {
     private val binder = LocalBinder()
     private var accidentFlag: Boolean = false
     private lateinit var addressConverter: AddressConverter
-    var receiveAddress: Address? = null
+    val locationChannel = Channel<Location>(Channel.CONFLATED)
+    val addressChannel = Channel<Address>(Channel.CONFLATED)
 
     inner class LocalBinder : Binder() {
         fun getService(): ForegroundService {
@@ -107,20 +110,12 @@ class ForegroundService : Service() {
             // return
         }
 
-        addressConverter = AddressConverter(nowContext, object : AddressConverter.GeocoderListener {
-            override fun sendAddress(address: Address) {
-                receiveAddress = address
-                Log.d("[로그]", "Address 최신화")
-            }
-        }
-        )
-
     }
 
     @SuppressLint("ForegroundServiceType", "ServiceCast")
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         setServiceState(true)
-        Log.d("[로그]","서비스 시작")
+        Log.d("[로그]", "서비스 시작")
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channelId = "your_general_channel_id"
@@ -156,11 +151,22 @@ class ForegroundService : Service() {
 
         serviceScope.launch {
 
+            addressConverter = AddressConverter(nowContext, object : AddressConverter.GeocoderListener {
+                override fun sendAddress(address: Address) {
+                    Log.d("[로그]", "Address 최신화")
+                    serviceScope.launch { // 데이터가 전달될 확률 (사고날 확률) 적으니
+                        addressChannel.send(address)
+                    }
+                }
+            }
+            )
+
             bluetoothRepository.readDataFromDevice().collect { location ->
                 accidentFlag = true
                 showScreen(count.value ?: 0)
                 bluetoothRepository.sendDataToDevice()
                 addressConverter.getAddressFromLocation(location) // 성공시 oncreate의 fun sendAddress(address: Address) 로 이동해서 receiveAddress 변경 (비동기..)
+                locationChannel.send(location)
             }
         }
 
@@ -225,9 +231,10 @@ class ForegroundService : Service() {
 
                     val firebase = FirebaseCommunication()
                     val email = "sanghoo1023@gmail.com"
-                    val accidentAddress =
-                        receiveAddress?.let { AddressConverter.convertAddressToString(it) } // 동기화 필요...
+                    val accidentAddress = addressChannel.receive().let {AddressConverter.convertAddressToString(it) }?:"위치 정보를 확인할 수 없습니다."
+                    val receiveLocation = locationChannel.receive()
                     Log.d("[로그]", "$accidentAddress")
+                    Log.d("[로그]", "latitiude : ${receiveLocation.latitude}, longitude : ${receiveLocation.longitude}")
 
                     firebase.fetchUserByDocumentId(email) { userInfo ->
                         if (userInfo != null) {
@@ -299,9 +306,12 @@ class ForegroundService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        Log.d("[로그]", "서비스 종료")
         serviceScope.cancel()
         bluetoothRepository.disconnect()
-        Log.d("[로그]","서비스 종료")
+        locationChannel.close()
+        addressChannel.close()
+
     }
 
     private fun timer() {
