@@ -293,13 +293,33 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         addNewDevices(navHeader)
         pairedDevices(navHeader)
         connectDevice()
-        
-        // 서비스 종료
-        val disconnectView = navHeader.findViewById<View>(R.id.disconnect)
-        disconnectView.setOnClickListener{
-            if (isServiceRunning()){
-                stopForegroundService()
-                showToast("모든 연결을 종료합니다.")
+        disconnectDevice(navHeader)
+    }
+
+    private fun addNewDevices(navHeader: View) {
+        val btnDeviceDiscovery = navHeader.findViewById<Button>(R.id.btndevicediscovery)
+        btnDeviceDiscovery.setOnClickListener {
+            checkBluetoothEnabledState {
+                drawerLayout.closeDrawer(GravityCompat.START)
+                moveActivity(DeviceDiscoveryActivity::class.java)
+            }
+        }
+    }
+
+    fun pairedDevices(navHeader: View) {
+        recyclerView = navHeader.findViewById(R.id.paireddevice)
+        pairedDeviceAdapter = PairedDeviceAdapter(emptyList())
+
+        recyclerView.apply {
+            adapter = pairedDeviceAdapter
+            layoutManager = LinearLayoutManager(this@UserProfileActivity)
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                bluetoothViewModel.pairedDevices2.collect { devices ->
+                    pairedDeviceAdapter.updateDevices(devices)
+                }
             }
         }
     }
@@ -329,30 +349,29 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         }
     }
 
-    private fun addNewDevices(navHeader: View) {
-        val btnDeviceDiscovery = navHeader.findViewById<Button>(R.id.btndevicediscovery)
-        btnDeviceDiscovery.setOnClickListener {
-            checkBluetoothEnabledState {
-                drawerLayout.closeDrawer(GravityCompat.START)
-                moveActivity(DeviceDiscoveryActivity::class.java)
-            }
-        }
-    }
+    private fun disconnectDevice(navHeader: View) {
+        val disconnectView = navHeader.findViewById<View>(R.id.disconnect)
+        disconnectView.setOnClickListener {
 
-    fun pairedDevices(navHeader: View) {
-        recyclerView = navHeader.findViewById(R.id.paireddevice)
-        pairedDeviceAdapter = PairedDeviceAdapter(emptyList())
+            if (isServiceRunning()) {
+//                val filter = IntentFilter("SERVICE_STOPPED")
+//
+//                val serviceStoppedReceiver = object : BroadcastReceiver() {
+//                    override fun onReceive(context: Context?, intent: Intent?) {
+//
+//                        if (intent?.action == "SERVICE_STOPPED") {
+//                            Log.d("[로그]","SERVICE_STOPPED 수신")
+//                            showToast("모든 연결을 종료합니다.")
+//                            context?.unregisterReceiver(this)
+//                        }
+//                    }
+//                }
+//                this.registerReceiver(serviceStoppedReceiver, filter,  RECEIVER_NOT_EXPORTED)
+                stopForegroundService()
+                lifecycleScope.launch {
+                    delay(700)
+                    showToast("모든 연결을 종료합니다.") }
 
-        recyclerView.apply {
-            adapter = pairedDeviceAdapter
-            layoutManager = LinearLayoutManager(this@UserProfileActivity)
-        }
-
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                bluetoothViewModel.pairedDevices2.collect { devices ->
-                    pairedDeviceAdapter.updateDevices(devices)
-                }
             }
         }
     }
@@ -391,7 +410,7 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
     }
 
     suspend fun attemptConnectToDevice(position: Int) {
-        val device = pairedDeviceAdapter.getDeviceAtPosition(position)
+        val device = pairedDeviceAdapter.getDeviceAtPosition(position).bluetoothDevice
         val flag = bluetoothViewModel.connectToDevice(device)
         delay(700)
         handleConnectionResult(flag)
@@ -404,7 +423,7 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
             startForegroundService()
         } else if (flag == ConnectResult.DISCONNECT) {
             showToast("연결 실패했습니다.")
-        }else{
+        } else {
 
         }
     }
