@@ -17,7 +17,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.capstone.nongchown.Adapter.DeviceAdapter
+import com.capstone.nongchown.Adapter.DiscoveredDeviceAdapter
 import com.capstone.nongchown.Model.BluetoothService
 import com.capstone.nongchown.Model.Enum.BluetoothState
 import com.capstone.nongchown.Model.ForegroundService
@@ -27,7 +27,6 @@ import com.capstone.nongchown.Utils.showToast
 import com.capstone.nongchown.ViewModel.BluetoothViewModel
 import com.capstone.nongchown.databinding.ActivityBluetoothBinding
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 
@@ -36,7 +35,7 @@ class BluetoothActivity : AppCompatActivity(){
 
     val bluetoothViewModel by viewModels<BluetoothViewModel>()
     lateinit var binding: ActivityBluetoothBinding
-    lateinit var deviceAdapter: DeviceAdapter
+    lateinit var deviceAdapter: DiscoveredDeviceAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,7 +49,7 @@ class BluetoothActivity : AppCompatActivity(){
         setupRecyclerView()
         showConnectSuccessMessage()
 
-        deviceAdapter.itemClick = object : DeviceAdapter.ItemClick {
+        deviceAdapter.itemClick = object : DiscoveredDeviceAdapter.ItemClick {
 
             override fun onClick(view: View, position: Int) {
                 // 1. 우선 실행중인 service 제거
@@ -59,7 +58,7 @@ class BluetoothActivity : AppCompatActivity(){
 
                 // 2. 연결
                 val device = deviceAdapter.getDeviceAtPosition(position)
-                bluetoothViewModel.connectToDevice(device)
+//                bluetoothViewModel.connectToDevice(device)
             }
         }
 
@@ -123,7 +122,7 @@ class BluetoothActivity : AppCompatActivity(){
 
     private fun setupRecyclerView() {
 
-        deviceAdapter = DeviceAdapter(emptyList())
+        deviceAdapter = DiscoveredDeviceAdapter(emptyList())
         binding.paireddevice.apply {
             adapter = deviceAdapter
             layoutManager = LinearLayoutManager(this@BluetoothActivity)
@@ -141,13 +140,13 @@ class BluetoothActivity : AppCompatActivity(){
     private fun showConnectSuccessMessage() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                bluetoothViewModel.connectionStatus.collect { isConnected ->
-                    if (isConnected) {
-                        showToast("연결되었습니다.")
-                        delay(1000)
-                        startBluetoothService()
-                    }
-                }
+//                bluetoothViewModel.connectionStatus.collect { isConnected ->
+//                    if (isConnected) {
+//                        showToast("연결되었습니다.")
+//                        delay(1000)
+//                        startBluetoothService()
+//                    }
+//                }
             }
         }
     }

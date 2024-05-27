@@ -7,9 +7,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.capstone.nongchown.databinding.DiscoveryDeviceListBinding
+import com.capstone.nongchown.databinding.ConnectedDeviceListBinding
 
-class DeviceAdapter(var deviceList: List<BluetoothDevice>) : RecyclerView.Adapter<DeviceAdapter.Holder>() {
+class PairedDeviceAdapter(var deviceList: List<BluetoothDevice>) : RecyclerView.Adapter<PairedDeviceAdapter.Holder>() {
 
     /** interface 객체 생성 */
     var itemClick : ItemClick? = null
@@ -22,8 +22,8 @@ class DeviceAdapter(var deviceList: List<BluetoothDevice>) : RecyclerView.Adapte
      * viewHolder가 생성되는 함수
      * 여기서 반환한 뷰 홀더 객체는 자동으로 onBindViewHolder() 함수의 매개변수로 전달
      */
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DeviceAdapter.Holder {
-        val binding = DiscoveryDeviceListBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PairedDeviceAdapter.Holder {
+        val binding = ConnectedDeviceListBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return Holder(binding)
     }
 
@@ -32,7 +32,7 @@ class DeviceAdapter(var deviceList: List<BluetoothDevice>) : RecyclerView.Adapte
      * position은 아이템중 지금 아이템이 몇번째 아이템인지 알려줌
      * */
     @SuppressLint("MissingPermission")
-    override fun onBindViewHolder(holder: DeviceAdapter.Holder, position: Int) {
+    override fun onBindViewHolder(holder: PairedDeviceAdapter.Holder, position: Int) {
         /**
          * 클릭이벤트 - 클릭 리스너를 설정
          * 클릭 이벤트가 발생할 때 itemClick 콜백을 통해 외부로 이벤트를 전달
@@ -42,16 +42,16 @@ class DeviceAdapter(var deviceList: List<BluetoothDevice>) : RecyclerView.Adapte
             itemClick?.onClick(it, position)
         }
         holder.name.text = deviceList[position].name?: "알 수 없는 기기"
-        holder.address.text = deviceList[position].address
+//        holder.address.text = deviceList[position].address
     }
 
     fun getDeviceAtPosition(position: Int): BluetoothDevice {
         return deviceList[position]
     }
 
-    inner class Holder(binding: DiscoveryDeviceListBinding) : RecyclerView.ViewHolder(binding.root) {
+    inner class Holder(binding: ConnectedDeviceListBinding) : RecyclerView.ViewHolder(binding.root) {
         val name = binding.name
-        val address = binding.address
+
     }
 
     @SuppressLint("NotifyDataSetChanged")

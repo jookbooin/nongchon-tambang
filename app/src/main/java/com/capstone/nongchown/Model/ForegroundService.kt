@@ -24,8 +24,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import androidx.core.location.component1
-import androidx.core.location.component2
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.capstone.nongchown.R
@@ -48,8 +46,19 @@ class ForegroundService : Service() {
 
     private val serviceScope = CoroutineScope(Dispatchers.IO)
 
-    //    private var startMode: Int = 0             // 서비스가 kill 될 때, 어떻게 동작할지를 나타냄
-//    private var binder: IBinder? = null        // bind 된 클라이언트와 소통하기 위한 인터페이스
+    companion object {
+        @Volatile
+        private var runningServiceState = false     // 메모리로 접근
+
+        fun isServiceRunning() = runningServiceState
+
+        fun setServiceState(flag: Boolean) {
+            synchronized(this) {
+                runningServiceState = flag
+            }
+        }
+    }
+
     private var allowRebind: Boolean = false   // onRebind() 메소드가 사용될지 말지를 결정함
 
     private lateinit var notificationManager: NotificationManager
@@ -262,13 +271,13 @@ class ForegroundService : Service() {
                         count.value=20
                     }
 
-                    bluetoothRepository.readDataFromDevice().collect { location ->
-                        val (latitude, longitude) = location
-                        firebase.recordAccidentLocation(
-                            latitude,
-                            longitude
-                        )
-                    }
+//                    bluetoothRepository.readDataFromDevice().collect { location ->
+//                        val (latitude, longitude) = location
+//                        firebase.recordAccidentLocation(
+//                            latitude,
+//                            longitude
+//                        )
+//                    }
 
 
 
