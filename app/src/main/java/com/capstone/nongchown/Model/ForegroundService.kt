@@ -76,8 +76,8 @@ class ForegroundService : Service() {
     private val binder = LocalBinder()
     private var accidentFlag: Boolean = false
     private lateinit var addressConverter: AddressConverter
-    var receiveAddress: Address? = null
     val locationChannel = Channel<Location>(Channel.CONFLATED)
+    val addressChannel = Channel<Address>(Channel.CONFLATED)
 
     inner class LocalBinder : Binder() {
         fun getService(): ForegroundService {
@@ -109,14 +109,6 @@ class ForegroundService : Service() {
             // for ActivityCompat#requestPermissions for more details.
             // return
         }
-
-        addressConverter = AddressConverter(nowContext, object : AddressConverter.GeocoderListener {
-            override fun sendAddress(address: Address) {
-                receiveAddress = address
-                Log.d("[로그]", "Address 최신화")
-            }
-        }
-        )
 
     }
 
@@ -158,6 +150,16 @@ class ForegroundService : Service() {
         }
 
         serviceScope.launch {
+
+            addressConverter = AddressConverter(nowContext, object : AddressConverter.GeocoderListener {
+                override fun sendAddress(address: Address) {
+                    Log.d("[로그]", "Address 최신화")
+                    serviceScope.launch { // 데이터가 전달될 확률 (사고날 확률) 적으니
+                        addressChannel.send(address)
+                    }
+                }
+            }
+            )
 
             bluetoothRepository.readDataFromDevice().collect { location ->
                 accidentFlag = true
@@ -229,7 +231,7 @@ class ForegroundService : Service() {
 
                     val firebase = FirebaseCommunication()
                     val email = "sanghoo1023@gmail.com"
-                    val accidentAddress = receiveAddress?.let { AddressConverter.convertAddressToString(it) }?:"위치 정보를 확인할 수 없습니다."
+                    val accidentAddress = addressChannel.receive().let {AddressConverter.convertAddressToString(it) }?:"위치 정보를 확인할 수 없습니다."
                     val receiveLocation = locationChannel.receive()
                     Log.d("[로그]", "$accidentAddress")
                     Log.d("[로그]", "latitiude : ${receiveLocation.latitude}, longitude : ${receiveLocation.longitude}")
@@ -304,10 +306,12 @@ class ForegroundService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        Log.d("[로그]", "서비스 종료")
         serviceScope.cancel()
         bluetoothRepository.disconnect()
         locationChannel.close()
-        Log.d("[로그]", "서비스 종료")
+        addressChannel.close()
+
     }
 
     private fun timer() {
