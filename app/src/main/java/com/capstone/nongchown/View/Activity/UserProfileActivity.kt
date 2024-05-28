@@ -87,18 +87,6 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         enableEdgeToEdge()
         setContentView(R.layout.activity_user_profile)
 
-        // 문자 전송 관련 권한
-//        if (ContextCompat.checkSelfPermission(
-//                this,
-//                Manifest.permission.SEND_SMS
-//            ) != PackageManager.PERMISSION_GRANTED
-//        ) {//권한이 없다면
-//            ActivityCompat.requestPermissions(
-//                this,
-//                arrayOf(Manifest.permission.SEND_SMS),
-//                PERMISSIONS_REQUEST_SEND_SMS
-//            )
-//        }
 
         pageScroll = findViewById(R.id.user_profile_scroll)
 
@@ -183,6 +171,11 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
                     addEmergencyContact(emergencyContacts, userInfo.emergencyContactList[i])
                 }
 
+                val sharedPreferences = getSharedPreferences("user", Context.MODE_PRIVATE)
+                val editor = sharedPreferences.edit()
+                editor.putString("ID", email)
+                editor.apply()
+
                 saveButton.isEnabled = false
             } catch (e: IllegalArgumentException) {
                 Toast.makeText(this, "입력 오류: ${e.message}", Toast.LENGTH_LONG).show()
@@ -213,7 +206,11 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
 
         Log.d("[로그]", "initializing")
 
-        email = "sanghoo1023@gmail.com"
+        val sharedPreferences = getSharedPreferences("user", Context.MODE_PRIVATE)
+        val userID = sharedPreferences.getString("ID", "")
+        email = userID.toString()
+        if(email=="")
+            return
 
         lifecycleScope.launch {
             val userInfo = userprofileViewModel.loadStoredData(email)

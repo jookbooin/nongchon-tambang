@@ -118,7 +118,7 @@ class ForegroundService : Service() {
         Log.d("[로그]", "서비스 시작")
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channelId = "your_general_channel_id"
+            val channelId = "noti"
             val channelName = "General Notifications"
             val importance = NotificationManager.IMPORTANCE_HIGH
             val channel = NotificationChannel(channelId, channelName, importance)
@@ -132,7 +132,7 @@ class ForegroundService : Service() {
         val alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
 
 // 일반 알림 빌더 설정
-        val generalNotification = NotificationCompat.Builder(this, "your_general_channel_id")
+        val generalNotification = NotificationCompat.Builder(this, "noti")
             .setContentTitle("농촌 실행중")
             .setContentText("농촌 서비스가 안전하게 지키고 있습니다.")
             .setSmallIcon(R.drawable.ic_launcher_background)
@@ -176,9 +176,7 @@ class ForegroundService : Service() {
                 if (accidentFlag && (count.value ?: 0) >= 1) {
 
                     count.postValue((count.value ?: 0) - 1)
-                    Log.d("test", count.toString())
 
-                    //val accident = AccidentActivity.getInstance()
                     val accidentIntent = Intent(nowContext, AccidentActivity::class.java)
                     accidentIntent.putExtra("timer", (count.value ?: 0))
                     val pendingMain = PendingIntent.getActivity(
@@ -189,7 +187,7 @@ class ForegroundService : Service() {
                     )
 
                     val generalNotification2 =
-                        NotificationCompat.Builder(nowContext, "your_general_channel_id")
+                        NotificationCompat.Builder(nowContext, "noti")
                             .setContentTitle("전복사고 발생")
                             .setContentText(
                                 "현재 안전하다면 " + (count.value ?: 0).toString() + "초 안에 버튼을 눌러주세요"
@@ -204,33 +202,46 @@ class ForegroundService : Service() {
                         if (ActivityCompat.checkSelfPermission(
                                 nowContext,
                                 Manifest.permission.POST_NOTIFICATIONS
-                            ) != PackageManager.PERMISSION_GRANTED
+                            ) == PackageManager.PERMISSION_GRANTED
                         ) {
-                            // TODO: Consider calling
-                            //    ActivityCompat#requestPermissions
-                            // here to request the missing permissions, and then overriding
-                            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                            //                                          int[] grantResults)
-                            // to handle the case where the user grants the permission. See the documentation
-                            // for ActivityCompat#requestPermissions for more details.
-                            //return
+                            notify(2, generalNotification2) // 포그라운드 알림과 다른 ID 사용
                         }
-                        notify(2, generalNotification2) // 포그라운드 알림과 다른 ID 사용
+
                     }
 
 
                 } else if ((count.value ?: 0) <= 0 && accidentFlag) {
-                    val updatedNotification = NotificationCompat.Builder(nowContext, "1")
+                    val updatedNotification = NotificationCompat.Builder(nowContext, "noti")
                         .setContentTitle("전복사고 발생")
                         .setContentText("정상적으로 신고되었습니다.")
                         .setSmallIcon(R.drawable.ic_launcher_background)
                         .build()
                     NotificationManagerCompat.from(nowContext).notify(1, updatedNotification)
 
-                    //문자전송
 
+                    val Notification = NotificationCompat.Builder(nowContext, "noti")
+                        .setContentTitle("농촌 실행중")
+                        .setContentText("농촌 서비스가 안전하게 지키고 있습니다.")
+                        .setSmallIcon(R.drawable.ic_launcher_background)
+                        .setPriority(NotificationCompat.PRIORITY_LOW)
+                        .build()
+
+                    with(NotificationManagerCompat.from(nowContext)) {
+                        if (ActivityCompat.checkSelfPermission(
+                                nowContext,
+                                Manifest.permission.POST_NOTIFICATIONS
+                            ) == PackageManager.PERMISSION_GRANTED
+                        ) {
+                            notify(2, Notification)
+                        }
+
+                    }
+
+                    //문자전송
                     val firebase = FirebaseCommunication()
-                    val email = "sanghoo1023@gmail.com"
+                    val sharedPreferences = getSharedPreferences("user", Context.MODE_PRIVATE)
+                    val userID = sharedPreferences.getString("ID", "")
+                    val email = userID.toString()
                     val accidentAddress = addressChannel.receive().let {AddressConverter.convertAddressToString(it) }?:"위치 정보를 확인할 수 없습니다."
                     val receiveLocation = locationChannel.receive()
                     Log.d("[로그]", "$accidentAddress")
@@ -249,19 +260,30 @@ class ForegroundService : Service() {
                             ) {//권한이 없다면
 
                             } else { //권한이 있다면 SMS를 보낸다.
+                                val smsText :String = "${userInfo.name}님께서 사고를 당하셨습니다."
 
                                 val smsManager = SmsManager.getDefault()
+
                                 try {
 
 
-//                                    smsManager.sendTextMessage(
-//                                        "+82" + userInfo.emergencyContactList[0],
-//                                        null,
-//                                        "안녕~~~",
-//                                        null,
-//                                        null
-//                                    )
+                                    userInfo.emergencyContactList.forEach{number->
+                                        smsManager.sendTextMessage(
+                                            "+82" + number,
+                                            null,
+                                            smsText,
+                                            null,
+                                            null
+                                        )
 
+                                        smsManager.sendTextMessage(
+                                            "+82" + number,
+                                            null,
+                                            "$accidentAddress",
+                                            null,
+                                            null
+                                        )
+                                    }
 
                                 } catch (ex: Exception) {
                                     ex.printStackTrace()
@@ -273,6 +295,9 @@ class ForegroundService : Service() {
                         } else {
                             Log.d("[로그]", "사용자 정보를 찾을 수 없습니다.")
                         }
+
+                        changeAccidentFlag(false)
+                        count.value=20
                     }
 
 //                    bluetoothRepository.readDataFromDevice().collect { location ->
@@ -283,15 +308,6 @@ class ForegroundService : Service() {
 //                        )
 //                    }
 
-                    changeAccidentFlag(false)
-
-                } else {
-                    val updatedNotification = NotificationCompat.Builder(nowContext, "1")
-                        .setContentTitle("농촌 실행중")
-                        .setContentText("농촌 서비스가 안전하게 지키고 있습니다.")
-                        .setSmallIcon(R.drawable.ic_launcher_background)
-                        .build()
-                    NotificationManagerCompat.from(nowContext).notify(2, updatedNotification)
 
                 }
 
@@ -324,10 +340,30 @@ class ForegroundService : Service() {
     public fun userSafe() {
         changeAccidentFlag(false)
         count.postValue(20)
-        Log.d("test", "foreground")
+
+        val updatedNotification = NotificationCompat.Builder(nowContext, "noti")
+            .setContentTitle("농촌 실행중")
+            .setContentText("농촌 서비스가 안전하게 지키고 있습니다.")
+            .setSmallIcon(R.drawable.ic_launcher_background)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .build()
+
+        with(NotificationManagerCompat.from(nowContext)) {
+            if (ActivityCompat.checkSelfPermission(
+                    nowContext,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                notify(2, updatedNotification)
+            }
+
+        }
 
     }
-
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        stopSelf()
+        super.onTaskRemoved(rootIntent)
+    }
     fun getTimerCount(): LiveData<Int> {
         return count
     }
