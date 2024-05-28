@@ -2,17 +2,27 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     android:paddingLeft="16dp"
     android:paddingTop="10dp"
     android:paddingBottom="10dp"
-    >
+    android:paddingRight="16dp"
+    android:gravity="center_vertical">
 
     <TextView
         android:id="@+id/name"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:textSize="19dp"
-        android:text="Device Name"/>
+        android:layout_weight="1"
+        android:textSize="21dp"
+        android:text="Device Name"
+        android:ellipsize="end"
+        android:singleLine="true"/>
 
+    <View
+        android:id="@+id/connectState"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginStart="10dp"
+        android:background="@drawable/gray_circle_shape"/>
 </LinearLayout>

@@ -2,7 +2,10 @@ package com.capstone.nongchown.View.Activity
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -17,6 +20,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.capstone.nongchown.Adapter.DiscoveredDeviceAdapter
+import com.capstone.nongchown.Model.Enum.ConnectResult
 import com.capstone.nongchown.Model.ForegroundService
 import com.capstone.nongchown.R
 import com.capstone.nongchown.Utils.showToast
@@ -26,6 +30,8 @@ import com.capstone.nongchown.databinding.ActivityDeviceDiscoveryBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 @AndroidEntryPoint
 class DeviceDiscoveryActivity : AppCompatActivity() {
@@ -117,15 +123,34 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
 
             override fun onClick(view: View, position: Int) {
                 lifecycleScope.launch {
-                    if (ForegroundService.isServiceRunning()){
+                    if (ForegroundService.isServiceRunning()) {
                         Log.d("[로그]", "연결 시킬 기기 눌렀을 때 - 서비스 상태 : ${ForegroundService.isServiceRunning()}")
-                        stopForegroundService()
-                        Log.d("[로그]", "종료 후 서비스 상태 : ${ForegroundService.isServiceRunning()}")
+                        suspendCoroutine<Unit> { continuation ->
+                            val filter = IntentFilter("SERVICE_STOPPED")
+                            val serviceStoppedReceiver = object : BroadcastReceiver() {
+                                override fun onReceive(context: Context?, intent: Intent?) {
+                                    if (intent?.action == "SERVICE_STOPPED") {
+                                        Log.d("[로그]", "SERVICE_STOPPED 수신")
+                                        Log.d("[로그]", "종료 후 서비스 상태 : ${ForegroundService.isServiceRunning()}")
+                                        context?.unregisterReceiver(this)
+                                        continuation.resume(Unit)
+                                    }
+                                }
+                            }
+
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                registerReceiver(serviceStoppedReceiver, filter, RECEIVER_EXPORTED)
+                            } else {
+                                registerReceiver(serviceStoppedReceiver, filter)
+                            }
+
+                            stopForegroundService()
+                        }
 
                         if (!ForegroundService.isServiceRunning()) {
                             attemptConnectToDevice(position)
                         }
-                    }else{
+                    } else {
                         Log.d("[로그]", "연결 시킬 눌렀을 때 - 서비스 상태 : ${ForegroundService.isServiceRunning()}")
                         attemptConnectToDevice(position)
                     }
@@ -136,7 +161,6 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
 
     fun cancelDiscovery() {
         binding.btncanceldiscovery.setOnClickListener() {
-            bluetoothViewModel.cancelBluetoothDiscovery()
             finish()
         }
     }
@@ -164,13 +188,13 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
         handleConnectionResult(flag)
     }
 
-    fun handleConnectionResult(flag: Boolean) {
-        if (flag) {
+    fun handleConnectionResult(flag: ConnectResult) {
+        if (flag == ConnectResult.CONNECT) {
             showToast("연결되었습니다.")
             finish()
             startForegroundService()
-        } else {
-            Log.d("[로그]","연결 실패")
+        } else if(flag == ConnectResult.DISCONNECT) {
+            Log.d("[로그]", "연결 실패")
             showToast("연결 실패했습니다.")
         }
     }

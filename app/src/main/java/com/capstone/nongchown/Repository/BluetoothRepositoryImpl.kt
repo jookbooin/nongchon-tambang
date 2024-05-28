@@ -11,9 +11,10 @@ import android.content.IntentFilter
 import android.location.Location
 import android.util.Log
 import com.capstone.nongchown.Constants
+import com.capstone.nongchown.Exception.BondException
+import com.capstone.nongchown.Model.PairedBluetoothDevice
 import com.capstone.nongchown.Utils.GeoConverter
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,20 +27,20 @@ import java.io.OutputStream
 import java.util.UUID
 import javax.inject.Inject
 import kotlin.coroutines.coroutineContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 class BluetoothRepositoryImpl @Inject constructor(
     private val context: Context, private val bluetoothAdapter: BluetoothAdapter
 ) : BluetoothRepository {
 
-    //    private var deviceScanReceiver: BroadcastReceiver? = null // null 초기화 : 필요한 시점까지 객체의 생성을 늦춘다.
     private val _discoveredDeviceList = MutableStateFlow<List<BluetoothDevice>>(emptyList())
     private val _pairedDeviceList = MutableStateFlow<List<BluetoothDevice>>(emptyList())
+    private val _pairedDeviceList2 = MutableStateFlow<List<PairedBluetoothDevice>>(emptyList())
 
     private var bluetoothSocket: BluetoothSocket? = null
-    private var connectedJob: Job? = null
 
     val geoConverter = GeoConverter()
-
 
     @SuppressLint("MissingPermission")
     override fun startDiscovery(): MutableStateFlow<List<BluetoothDevice>> {
@@ -53,10 +54,7 @@ class BluetoothRepositoryImpl @Inject constructor(
         filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)             // 기기 검색 시작
         filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)            // 기기 검색 종료
         filter.addAction(BluetoothDevice.ACTION_FOUND)                          // 기기 검색됨
-        filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED)                  // a low level (ACL) connection 연결 확인
-        filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)             // 원격 블루투스 장치의 페어링 상태가 변경 (페어링?)
-        filter.addAction(BluetoothDevice.ACTION_PAIRING_REQUEST)                // 페어링 요청
-        filter.addAction(BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED)
+
         context.registerReceiver(deviceScanReceiver, filter)
         bluetoothAdapter?.startDiscovery()
         return _discoveredDeviceList
@@ -76,6 +74,7 @@ class BluetoothRepositoryImpl @Inject constructor(
 
             pairedDevices.forEach { device ->
                 Log.d("[로그]", "페어링 되어있는 기기 ( Name: ${device.name}, Address: ${device.address} )")
+                val m = device.javaClass.getMethod("isConnected")
             }
 
             _pairedDeviceList.value = pairedDevices.toList()
@@ -85,20 +84,39 @@ class BluetoothRepositoryImpl @Inject constructor(
         return _pairedDeviceList
     }
 
+    @SuppressLint("MissingPermission")
+    override fun getPairedDevices2(): StateFlow<List<PairedBluetoothDevice>> {
+        Log.d("[로그]", "GET PAIRED DEVICES")
+
+        if (bluetoothAdapter != null) {
+            // Ensure Bluetooth is enabled
+            if (!bluetoothAdapter.isEnabled) {
+                // You might want to prompt the user to enable Bluetooth
+            }
+            // Get the list of paired devices
+            val pairedDevices: Set<BluetoothDevice> = bluetoothAdapter.bondedDevices
+
+            val pairedBluetoothDevices = pairedDevices.map { device ->
+                val m = device.javaClass.getMethod("isConnected")
+                val connected = m.invoke(device) as Boolean
+                Log.d("[로그]", "페어링 되어있는 기기 ( Name: ${device.name}, Address: ${device.address}, connected: ${connected})")
+                PairedBluetoothDevice(device, connected)
+            }
+
+            _pairedDeviceList2.value = pairedBluetoothDevices.toList()
+        } else {
+
+        }
+        return _pairedDeviceList2
+    }
+
     /***
      * bluetoothDevice.bondState : 10(BOND_NONE_페어링 이전), 11(BOND_BONDING_페어링 중), 12(BOND_BONDED_페어링 완료)
      */
-    @SuppressLint("MissingPermission")
+    @SuppressLint("MissingPermission","DEPRECATION")
     suspend override fun connectToDevice(bluetoothDevice: BluetoothDevice) {
         Log.d("[로그]", "[ ${Thread.currentThread().name} ]")
         Log.d("[로그]", "CONNECT TO DEVICE ( ${bluetoothDevice.name} : ${bluetoothDevice.address}")
-
-        /**  BluetoothDevice 객체가 아직 페어링되지 않았을 때 */
-        if (bluetoothDevice.bondState != BluetoothDevice.BOND_BONDED) {
-            Log.d("[로그]", "페어링 이전 상태 : ${bluetoothDevice.bondState}")
-            bluetoothDevice.createBond()
-            /** 페어링 과정 완료 후 ACTION_BOND_STATE_CHANGED 반환 */
-        }
 
         /**
          * 실행환경 변화 : Dispatcher.IO 환경에서 코루틴을 실행  ( 네트워크 작업 )
@@ -106,13 +124,90 @@ class BluetoothRepositoryImpl @Inject constructor(
          * */
         withContext(Dispatchers.IO) {
             Log.d("[로그]", "[ Dispatchers.IO 내부 : ${Thread.currentThread().name} ] - [ $coroutineContext ]")
+
+            var bondResult : Boolean
+            /**  BluetoothDevice 객체가 아직 페어링되지 않았을 때 */
+            if (bluetoothDevice.bondState != BluetoothDevice.BOND_BONDED) {
+                Log.d("[로그]", "페어링 이전 상태 : ${bluetoothDevice.bondState}")
+
+                val filter = IntentFilter()
+                filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED)                  // a low level (ACL) connection 연결 확인
+                filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)             // 원격 블루투스 장치의 페어링 상태가 변경 (페어링?)
+                filter.addAction(BluetoothDevice.ACTION_PAIRING_REQUEST)                // 페어링 요청
+
+                bondResult = suspendCoroutine<Boolean> { continuation ->
+
+                    val deviceBondReceiver = object : BroadcastReceiver() {
+                        override fun onReceive(context: Context?, intent: Intent?) {
+                            var action = ""
+                            if (intent != null) {
+                                action = intent.action.toString() //입력된 action
+                            }
+
+                            when (action) {
+
+                                BluetoothDevice.ACTION_BOND_STATE_CHANGED -> {
+                                    Log.d("[로그]", "[ACTION BOND STATE CHANGED]")
+
+                                    val device = intent?.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
+                                    device?.let {
+
+                                        Log.d("[로그]", "페어링 상태 변화 ( Name: ${device.name}, Address: ${device.address}, 페어링 상태 : : ${device.bondState} )")
+
+                                        when (it.bondState) {
+
+                                            BluetoothDevice.BOND_NONE -> {
+                                                Log.d("[로그]", "[BOND_NONE]")
+                                                context?.unregisterReceiver(this)
+                                                continuation.resume(false)
+                                            }
+
+                                            BluetoothDevice.BOND_BONDING -> {
+                                                Log.d("[로그]", "BOND_BONDING")
+                                            }
+
+                                            BluetoothDevice.BOND_BONDED -> {
+                                                Log.d("[로그]", "[BOND_BONDED]")
+                                                context?.unregisterReceiver(this)
+                                                continuation.resume(true)
+                                            }
+
+                                            else -> {
+                                                Log.d("[로그]", "else : ${it.bondState}")
+                                            }
+                                        }
+                                    }
+                                }
+
+                                BluetoothDevice.ACTION_PAIRING_REQUEST -> {
+                                    Log.d("[로그]", "ACTION PAIRING REQUEST")
+                                }
+
+                                BluetoothDevice.ACTION_ACL_CONNECTED -> {
+                                    Log.d("[로그]", "ACTION ACL CONNECTED")
+                                }
+
+                            }
+                        }
+                    }
+
+                    context.registerReceiver(deviceBondReceiver, filter)
+                    bluetoothDevice.createBond()
+                }
+
+                if(!bondResult){ // bond_none 선택
+                    throw BondException("BOND_NONE")
+                }
+            }
+
             if (bluetoothSocket != null) {
                 disconnect()
             }
+
             bluetoothSocket = createBluetoothSocket(bluetoothDevice)
             Log.d("[로그]", "연결 시작 전: ${bluetoothDevice.name} : ${bluetoothDevice.address} 페어링 상태 : ${bluetoothDevice.bondState}")
 
-            if(bluetoothSocket != null){
+            if (bluetoothSocket != null) {
                 try {
                     Log.d("[로그]", "bluetoothSocket != null")
                     bluetoothSocket!!.connect()
@@ -121,7 +216,7 @@ class BluetoothRepositoryImpl @Inject constructor(
                     Log.e("[로그]", "블루투스 소켓 연결 실패", e)
                     throw e
                 }
-            }else{
+            } else {
                 throw IllegalArgumentException("bluetoothSocket null")
             }
         }
@@ -137,18 +232,14 @@ class BluetoothRepositoryImpl @Inject constructor(
         return device.createRfcommSocketToServiceRecord(uuid)
     }
 
+    @SuppressLint("MissingPermission")
     override fun stopDiscovery() {
-        Log.d("[로그]", "DISCOVERY STOP")
-
+        Log.d("[로그]", "STOP DISCOVERY")
+        bluetoothAdapter.cancelDiscovery()  // 탐색 중, 탐색 후 둘다 적용..
         context.unregisterReceiver(deviceScanReceiver)
         Log.d("[로그]", "UNREGISTER RECEIVER")
     }
 
-    @SuppressLint("MissingPermission")
-    override fun cancelDiscovery() {
-        Log.d("[로그]", "DISCOVERY CANCEL")
-        bluetoothAdapter?.cancelDiscovery()
-    }
 
     // 데이터 연결 확인 (send)
     override suspend fun sendDataToDevice() {
@@ -184,7 +275,7 @@ class BluetoothRepositoryImpl @Inject constructor(
 
                     // message -> GeoCoordinate
                     val location: Location = geoConverter.convertFromString(message)
-                    
+
                     emit(location)
                     // message 방출 -> collect에서 수집
                     /**
@@ -235,7 +326,7 @@ class BluetoothRepositoryImpl @Inject constructor(
         } catch (e: IOException) {
         } finally {
             bluetoothSocket = null // 소켓 참조 제거
-            Log.d("[로그]","소켓 닫기")
+            Log.d("[로그]", "소켓 닫기")
         }
     }
 
@@ -256,21 +347,26 @@ class BluetoothRepositoryImpl @Inject constructor(
                     Log.d("[로그]", "ACTION STATE CHANGED")
                 }
 
+                // DIS
                 BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {
                     Log.d("[로그]", "DISCOVERY STARTED")
                     tempDeviceList.clear()
                     pairedDeviceAddresses = bluetoothAdapter.bondedDevices.map { it.address }.toSet()  // device -> mac 주소로만 변환
                 }
 
+                // DIS
                 BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
                     Log.d("[로그]", "DISCOVERY FINISHED")
                     _discoveredDeviceList.value = tempDeviceList
                     pairedDeviceAddresses = null
+                    Log.d("[로그]", "DISCOVERY CANCEL - DISCOVERY_FINISHED")
+                    bluetoothAdapter.cancelDiscovery()  // 탐색 중, 탐색 후 둘다 적용..
                 }
 
+                // DIS
                 BluetoothDevice.ACTION_FOUND -> {
                     val device = intent?.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
-                    device?.let {discoveredDevice ->
+                    device?.let { discoveredDevice ->
 
                         // 로그 찍기 용
                         if (discoveredDevice.name != null) {
@@ -287,31 +383,8 @@ class BluetoothRepositoryImpl @Inject constructor(
                     }
                 }
 
-                BluetoothDevice.ACTION_ACL_CONNECTED -> {
-                    Log.d("[로그]", "ACTION ACL CONNECTED")
-                }
-
-                BluetoothDevice.ACTION_BOND_STATE_CHANGED -> {
-                    val device = intent?.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
-                    device?.let {
-                        val bondState = it.bondState
-                        Log.d("[로그]", "페어링 상태 변화 ( Name: ${device.name}, Address: ${device.address}, 페어링 상태 : : ${device.bondState} )")
-                        // bondState를 이용해 현재 페어링 상태를 로그로 찍거나 다른 처리를 할 수 있습니다.
-                    }
-                }
-
-                BluetoothDevice.ACTION_PAIRING_REQUEST -> {
-                    Log.d("[로그]", "ACTION PAIRING REQUEST")
-                }
-
-                BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED -> {
-                    Log.d("[로그]", "ACTION CONNECTION STATE CHANGED")
-                }
-
             }
-
         }
     }
-
 
 }

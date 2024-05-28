@@ -1,15 +1,16 @@
 package com.capstone.nongchown.Adapter
 
 import android.annotation.SuppressLint
-import android.bluetooth.BluetoothDevice
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.capstone.nongchown.Model.PairedBluetoothDevice
+import com.capstone.nongchown.R
 import com.capstone.nongchown.databinding.ConnectedDeviceListBinding
 
-class PairedDeviceAdapter(var deviceList: List<BluetoothDevice>) : RecyclerView.Adapter<PairedDeviceAdapter.Holder>() {
+class PairedDeviceAdapter(var deviceList: List<PairedBluetoothDevice>) : RecyclerView.Adapter<PairedDeviceAdapter.Holder>() {
 
     /** interface 객체 생성 */
     var itemClick : ItemClick? = null
@@ -38,24 +39,30 @@ class PairedDeviceAdapter(var deviceList: List<BluetoothDevice>) : RecyclerView.
          * 클릭 이벤트가 발생할 때 itemClick 콜백을 통해 외부로 이벤트를 전달
          * */
         holder.itemView.setOnClickListener {
-            Log.d("[로그]"," position : $position name : ${deviceList[position].name} ")
+            Log.d("[로그]"," position : $position name : ${deviceList[position].bluetoothDevice.name} ")
             itemClick?.onClick(it, position)
         }
-        holder.name.text = deviceList[position].name?: "알 수 없는 기기"
+        holder.name.text = deviceList[position].bluetoothDevice.name?: "알 수 없는 기기"
 //        holder.address.text = deviceList[position].address
+
+        if(deviceList[position].connectFlag){
+            holder.state.setBackgroundResource(R.drawable.yellow_circle_shape)
+        }else{
+            holder.state.setBackgroundResource(R.drawable.gray_circle_shape)
+        }
     }
 
-    fun getDeviceAtPosition(position: Int): BluetoothDevice {
+    fun getDeviceAtPosition(position: Int): PairedBluetoothDevice {
         return deviceList[position]
     }
 
     inner class Holder(binding: ConnectedDeviceListBinding) : RecyclerView.ViewHolder(binding.root) {
         val name = binding.name
-
+        val state = binding.connectState
     }
 
     @SuppressLint("NotifyDataSetChanged")
-    fun updateDevices(newDevices: List<BluetoothDevice>) {
+    fun updateDevices(newDevices: List<PairedBluetoothDevice>) {
         deviceList = newDevices
         notifyDataSetChanged()
     }

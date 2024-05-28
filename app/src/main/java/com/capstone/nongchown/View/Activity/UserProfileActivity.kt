@@ -3,8 +3,10 @@ package com.capstone.nongchown.View.Activity
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -38,9 +40,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.capstone.nongchown.Adapter.PairedDeviceAdapter
 import com.capstone.nongchown.Model.Enum.BluetoothState
+import com.capstone.nongchown.Model.Enum.ConnectResult
 import com.capstone.nongchown.Model.ForegroundService
 import com.capstone.nongchown.Model.ForegroundService.Companion.isServiceRunning
-import com.capstone.nongchown.Model.ForegroundService.Companion.setServiceState
 import com.capstone.nongchown.Model.UserInfo
 import com.capstone.nongchown.R
 import com.capstone.nongchown.Utils.moveActivity
@@ -51,6 +53,8 @@ import com.google.android.material.navigation.NavigationView
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 @AndroidEntryPoint
 class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
@@ -276,7 +280,7 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         toolbar.setNavigationOnClickListener {
             checkBluetoothEnabledState { // 밑의 동작 람다식으로 넣음
                 drawerLayout.openDrawer(GravityCompat.START)
-                bluetoothViewModel.getPairedDevices()
+                bluetoothViewModel.getPairedDevices2()
             }
         }
     }
@@ -290,31 +294,7 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         addNewDevices(navHeader)
         pairedDevices(navHeader)
         connectDevice()
-    }
-
-    private fun connectDevice() {
-        pairedDeviceAdapter.itemClick = object : PairedDeviceAdapter.ItemClick {
-
-            override fun onClick(view: View, position: Int) {
-                checkBluetoothEnabledState {
-                    lifecycleScope.launch {
-                        if (isServiceRunning()) {
-                            Log.d("[로그]", "페어링 기기 눌렀을 때 - 서비스 상태 : ${isServiceRunning()}")
-                            stopForegroundService()
-                            Log.d("[로그]", "종료 후 서비스 상태 : ${isServiceRunning()}")
-
-                            if (!isServiceRunning()) {
-                                attemptConnectToDevice(position)
-                            }
-
-                        } else {
-                            Log.d("[로그]", "페어링 기기 눌렀을 때 - 서비스 상태 : ${isServiceRunning()}")
-                            attemptConnectToDevice(position)
-                        }
-                    }
-                }
-            }
-        }
+        disconnectDevice(navHeader)
     }
 
     private fun addNewDevices(navHeader: View) {
@@ -338,10 +318,90 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                bluetoothViewModel.pairedDevices.collect { devices ->
+                bluetoothViewModel.pairedDevices2.collect { devices ->
                     pairedDeviceAdapter.updateDevices(devices)
                 }
             }
+        }
+    }
+
+    private fun connectDevice() {
+        pairedDeviceAdapter.itemClick = object : PairedDeviceAdapter.ItemClick {
+
+            override fun onClick(view: View, position: Int) {
+                checkBluetoothEnabledState {
+                    lifecycleScope.launch {
+                        if (isServiceRunning()) {
+                            suspendCoroutine<Unit> { continuation ->
+                                val filter = IntentFilter("SERVICE_STOPPED")
+                                val serviceStoppedReceiver = object : BroadcastReceiver() {
+                                    override fun onReceive(context: Context?, intent: Intent?) {
+                                        if (intent?.action == "SERVICE_STOPPED") {
+                                            Log.d("[로그]", "SERVICE_STOPPED 수신")
+                                            Log.d("[로그]", "종료 후 서비스 상태 : ${isServiceRunning()}")
+                                            context?.unregisterReceiver(this)
+                                            continuation.resume(Unit)
+                                        }
+                                    }
+                                }
+
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    registerReceiver(serviceStoppedReceiver, filter, RECEIVER_EXPORTED)
+                                } else {
+                                    registerReceiver(serviceStoppedReceiver, filter)
+                                }
+
+                                stopForegroundService()
+                            }
+
+                            if (!isServiceRunning()) {
+                                attemptConnectToDevice(position)
+                            }
+
+                        } else {
+                            Log.d("[로그]", "페어링 기기 눌렀을 때 - 서비스 상태 : ${isServiceRunning()}")
+                            attemptConnectToDevice(position)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun disconnectDevice(navHeader: View) {
+        val disconnectView = navHeader.findViewById<View>(R.id.disconnect)
+        disconnectView.setOnClickListener {
+
+            if (isServiceRunning()) {
+                lifecycleScope.launch {
+                    suspendCoroutine<Unit> { continuation ->
+                        val filter = IntentFilter("SERVICE_STOPPED")
+
+                        val serviceStoppedReceiver = object : BroadcastReceiver() {
+                            override fun onReceive(context: Context?, intent: Intent?) {
+                                if (intent?.action == "SERVICE_STOPPED") {
+                                    Log.d("[로그]", "SERVICE_STOPPED 수신")
+                                    Log.d("[로그]", "모든 연결을 해제합니다.")
+                                    context?.unregisterReceiver(this)
+                                    continuation.resume(Unit)
+                                }
+                            }
+                        }
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            registerReceiver(serviceStoppedReceiver, filter, RECEIVER_EXPORTED)
+                        } else {
+                            registerReceiver(serviceStoppedReceiver, filter)
+                        }
+
+                        stopForegroundService()
+                    }
+
+                    delay(700)
+                    showToast("모든 연결을 해제합니다.")
+                }
+            }
+
         }
     }
 
@@ -369,29 +429,31 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         } else {
             startService(serviceIntent)
         }
-        setServiceState(true)
+//        setServiceState(true)
     }
 
     private fun stopForegroundService() {
         val serviceIntent = Intent(this@UserProfileActivity, ForegroundService::class.java)
         stopService(serviceIntent)
-        setServiceState(false)
+//        setServiceState(false)
     }
 
     suspend fun attemptConnectToDevice(position: Int) {
-        val device = pairedDeviceAdapter.getDeviceAtPosition(position)
+        val device = pairedDeviceAdapter.getDeviceAtPosition(position).bluetoothDevice
         val flag = bluetoothViewModel.connectToDevice(device)
         delay(700)
         handleConnectionResult(flag)
     }
 
-    fun handleConnectionResult(flag: Boolean) {
-        if (flag) {
+    fun handleConnectionResult(flag: ConnectResult) {
+        if (flag == ConnectResult.CONNECT) {
             showToast("연결되었습니다.")
             drawerLayout.closeDrawer(GravityCompat.START)
             startForegroundService()
-        } else {
+        } else if (flag == ConnectResult.DISCONNECT) {
             showToast("연결 실패했습니다.")
+        } else {
+
         }
     }
 
