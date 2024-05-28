@@ -31,10 +31,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Nongchown"
         tools:targetApi="31">
-        <service
-            android:name=".Model.BluetoothService"
-            android:enabled="true"
-            android:exported="true"></service>
+
         <service
             android:name=".Model.ForegroundService"
             android:enabled="true"
@@ -42,20 +39,11 @@
             tools:ignore="ForegroundServicePermission"></service>
 
         <activity
-            android:name=".View.Activity.BaseActivity.BluetoothBaseActivity"
-            android:exported="false" />
-        <activity
             android:name=".View.Activity.UserProfileActivity"
             android:exported="false" />
         <activity
             android:name=".View.Activity.DeviceDiscoveryActivity"
             android:exported="false" />
-        <activity
-            android:name=".View.Activity.BluetoothActivity"
-            android:exported="false" />
-        <activity
-            android:name=".View.Activity.MainActivity"
-            android:exported="true" />
         <activity
             android:name=".View.Activity.LogoActivity"
             android:exported="true"
@@ -67,9 +55,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".View.Activity.FireBaseTestActivity"/>
         <activity android:name=".View.Activity.AccidentActivity" />
-        <activity android:name=".View.Activity.AccidentTestActivity" />
     </application>
 
 </manifest>

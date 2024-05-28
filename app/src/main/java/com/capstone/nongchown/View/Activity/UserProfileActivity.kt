@@ -397,8 +397,9 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
                         stopForegroundService()
                     }
 
-                    delay(700)
+                    delay(1000)
                     showToast("모든 연결을 해제합니다.")
+                    drawerLayout.closeDrawer(GravityCompat.START)
                 }
             }
 

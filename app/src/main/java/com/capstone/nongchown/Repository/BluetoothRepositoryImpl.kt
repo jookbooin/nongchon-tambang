@@ -283,9 +283,9 @@ class BluetoothRepositoryImpl @Inject constructor(
                      * 1. 30초 delay
                      * 2. 30초 동안 buffer에 들어온 값 초기화
                      * */
-                    delay(30000)                                    // 30초 마다 1번씩만 들어오도록 해야한다?
+                    delay(40000)                                    // 30초 마다 1번씩만 들어오도록 해야한다?
                     while (inputStream.available() > 0) {
-                        Log.d("[로그]", "30초 동안 수신 받은 buffer 초기화")
+                        Log.d("[로그]", "40초 동안 수신 받은 buffer 초기화")
                         inputStream.read(buffer)
                     }
                     Log.d("[로그]", "30초 이후 buffer 초기화 ")

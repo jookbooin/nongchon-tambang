@@ -10,10 +10,8 @@ import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.ComponentActivity
-import androidx.activity.viewModels
 import com.capstone.nongchown.Model.ForegroundService
 import com.capstone.nongchown.R
-import com.capstone.nongchown.ViewModel.AccidentViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -21,7 +19,6 @@ import kotlinx.coroutines.launch
 
 class AccidentActivity : ComponentActivity() {
 
-    val accidentViewModel by viewModels<AccidentViewModel>()
     var timer =0
     private lateinit var nowContext: Context
     companion object {
