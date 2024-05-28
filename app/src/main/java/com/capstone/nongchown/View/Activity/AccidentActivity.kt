@@ -23,7 +23,7 @@ class AccidentActivity : ComponentActivity() {
 
     val accidentViewModel by viewModels<AccidentViewModel>()
     var timer =0
-
+    private lateinit var nowContext: Context
     companion object {
         private var instance: AccidentActivity? = null
 
@@ -64,7 +64,7 @@ class AccidentActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         instance = this
-
+        nowContext=this
         val serviceIntent=Intent(this, ForegroundService::class.java)
         bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE)
 
@@ -73,13 +73,6 @@ class AccidentActivity : ComponentActivity() {
 
 
         val intent = intent
-        countData = intent?.getIntExtra("timer", 0)!!
-        if (countData != 0) {
-            if (countData != null) {
-                updateTimerText(countData)
-            }
-        }
-
         timer = savedInstanceState?.getInt("timer") ?: intent.getIntExtra("timer", 0)
 
        CoroutineScope(Dispatchers.Main).launch {
@@ -90,6 +83,7 @@ class AccidentActivity : ComponentActivity() {
 
 
            }
+           finish()
        }
 
 
@@ -102,7 +96,7 @@ class AccidentActivity : ComponentActivity() {
             foregroundService?.userSafe()
             finish()
             val mainIntent = Intent(this, UserProfileActivity::class.java)
-            startActivity(mainIntent)
+            finish()
 
         }
     }
