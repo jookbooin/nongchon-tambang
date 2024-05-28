@@ -3,7 +3,10 @@ package com.capstone.nongchown.View.Activity
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -40,7 +43,6 @@ import com.capstone.nongchown.Model.Enum.BluetoothState
 import com.capstone.nongchown.Model.Enum.ConnectResult
 import com.capstone.nongchown.Model.ForegroundService
 import com.capstone.nongchown.Model.ForegroundService.Companion.isServiceRunning
-import com.capstone.nongchown.Model.ForegroundService.Companion.setServiceState
 import com.capstone.nongchown.Model.UserInfo
 import com.capstone.nongchown.R
 import com.capstone.nongchown.Utils.moveActivity
@@ -354,25 +356,29 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         disconnectView.setOnClickListener {
 
             if (isServiceRunning()) {
-//                val filter = IntentFilter("SERVICE_STOPPED")
-//
-//                val serviceStoppedReceiver = object : BroadcastReceiver() {
-//                    override fun onReceive(context: Context?, intent: Intent?) {
-//
-//                        if (intent?.action == "SERVICE_STOPPED") {
-//                            Log.d("[로그]","SERVICE_STOPPED 수신")
-//                            showToast("모든 연결을 종료합니다.")
-//                            context?.unregisterReceiver(this)
-//                        }
-//                    }
-//                }
-//                this.registerReceiver(serviceStoppedReceiver, filter,  RECEIVER_NOT_EXPORTED)
-                stopForegroundService()
                 lifecycleScope.launch {
-                    delay(700)
-                    showToast("모든 연결을 종료합니다.") }
+                    val filter = IntentFilter("SERVICE_STOPPED")
 
+                    val serviceStoppedReceiver = object : BroadcastReceiver() {
+                        override fun onReceive(context: Context?, intent: Intent?) {
+                            if (intent?.action == "SERVICE_STOPPED") {
+                                Log.d("[로그]", "SERVICE_STOPPED 수신")
+                                showToast("모든 연결을 해제합니다.")
+                                context?.unregisterReceiver(this)
+                            }
+                        }
+                    }
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        registerReceiver(serviceStoppedReceiver, filter, RECEIVER_EXPORTED)
+                    } else {
+                        registerReceiver(serviceStoppedReceiver, filter)
+                    }
+
+                    stopForegroundService()
+                }
             }
+
         }
     }
 
@@ -400,13 +406,13 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         } else {
             startService(serviceIntent)
         }
-        setServiceState(true)
+//        setServiceState(true)
     }
 
     private fun stopForegroundService() {
         val serviceIntent = Intent(this@UserProfileActivity, ForegroundService::class.java)
         stopService(serviceIntent)
-        setServiceState(false)
+//        setServiceState(false)
     }
 
     suspend fun attemptConnectToDevice(position: Int) {

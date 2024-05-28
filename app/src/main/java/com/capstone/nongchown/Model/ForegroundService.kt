@@ -311,7 +311,10 @@ class ForegroundService : Service() {
         bluetoothRepository.disconnect()
         locationChannel.close()
         addressChannel.close()
+        setServiceState(false)
 
+        val intent = Intent("SERVICE_STOPPED")
+        sendBroadcast(intent)
     }
 
     private fun timer() {
