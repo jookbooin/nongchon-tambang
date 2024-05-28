@@ -53,6 +53,8 @@ import com.google.android.material.navigation.NavigationView
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 @AndroidEntryPoint
 class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
@@ -333,9 +335,27 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
                 checkBluetoothEnabledState {
                     lifecycleScope.launch {
                         if (isServiceRunning()) {
-                            Log.d("[로그]", "페어링 기기 눌렀을 때 - 서비스 상태 : ${isServiceRunning()}")
-                            stopForegroundService()
-                            Log.d("[로그]", "종료 후 서비스 상태 : ${isServiceRunning()}")
+                            suspendCoroutine<Unit> { continuation ->
+                                val filter = IntentFilter("SERVICE_STOPPED")
+                                val serviceStoppedReceiver = object : BroadcastReceiver() {
+                                    override fun onReceive(context: Context?, intent: Intent?) {
+                                        if (intent?.action == "SERVICE_STOPPED") {
+                                            Log.d("[로그]", "SERVICE_STOPPED 수신")
+                                            Log.d("[로그]", "종료 후 서비스 상태 : ${isServiceRunning()}")
+                                            context?.unregisterReceiver(this)
+                                            continuation.resume(Unit)
+                                        }
+                                    }
+                                }
+
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    registerReceiver(serviceStoppedReceiver, filter, RECEIVER_EXPORTED)
+                                } else {
+                                    registerReceiver(serviceStoppedReceiver, filter)
+                                }
+
+                                stopForegroundService()
+                            }
 
                             if (!isServiceRunning()) {
                                 attemptConnectToDevice(position)
@@ -357,25 +377,31 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
 
             if (isServiceRunning()) {
                 lifecycleScope.launch {
-                    val filter = IntentFilter("SERVICE_STOPPED")
+                    suspendCoroutine<Unit> { continuation ->
+                        val filter = IntentFilter("SERVICE_STOPPED")
 
-                    val serviceStoppedReceiver = object : BroadcastReceiver() {
-                        override fun onReceive(context: Context?, intent: Intent?) {
-                            if (intent?.action == "SERVICE_STOPPED") {
-                                Log.d("[로그]", "SERVICE_STOPPED 수신")
-                                showToast("모든 연결을 해제합니다.")
-                                context?.unregisterReceiver(this)
+                        val serviceStoppedReceiver = object : BroadcastReceiver() {
+                            override fun onReceive(context: Context?, intent: Intent?) {
+                                if (intent?.action == "SERVICE_STOPPED") {
+                                    Log.d("[로그]", "SERVICE_STOPPED 수신")
+                                    Log.d("[로그]", "모든 연결을 해제합니다.")
+                                    context?.unregisterReceiver(this)
+                                    continuation.resume(Unit)
+                                }
                             }
                         }
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            registerReceiver(serviceStoppedReceiver, filter, RECEIVER_EXPORTED)
+                        } else {
+                            registerReceiver(serviceStoppedReceiver, filter)
+                        }
+
+                        stopForegroundService()
                     }
 
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        registerReceiver(serviceStoppedReceiver, filter, RECEIVER_EXPORTED)
-                    } else {
-                        registerReceiver(serviceStoppedReceiver, filter)
-                    }
-
-                    stopForegroundService()
+                    delay(700)
+                    showToast("모든 연결을 해제합니다.")
                 }
             }
 

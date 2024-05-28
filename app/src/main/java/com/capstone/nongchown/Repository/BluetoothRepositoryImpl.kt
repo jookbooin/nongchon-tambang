@@ -97,9 +97,9 @@ class BluetoothRepositoryImpl @Inject constructor(
             val pairedDevices: Set<BluetoothDevice> = bluetoothAdapter.bondedDevices
 
             val pairedBluetoothDevices = pairedDevices.map { device ->
-                Log.d("[로그]", "페어링 되어있는 기기 ( Name: ${device.name}, Address: ${device.address} )")
                 val m = device.javaClass.getMethod("isConnected")
                 val connected = m.invoke(device) as Boolean
+                Log.d("[로그]", "페어링 되어있는 기기 ( Name: ${device.name}, Address: ${device.address}, connected: ${connected})")
                 PairedBluetoothDevice(device, connected)
             }
 
