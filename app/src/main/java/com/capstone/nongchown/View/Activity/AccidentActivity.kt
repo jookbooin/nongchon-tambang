@@ -73,13 +73,6 @@ class AccidentActivity : ComponentActivity() {
 
 
         val intent = intent
-        countData = intent?.getIntExtra("timer", 0)!!
-        if (countData != 0) {
-            if (countData != null) {
-                updateTimerText(countData)
-            }
-        }
-
         timer = savedInstanceState?.getInt("timer") ?: intent.getIntExtra("timer", 0)
 
        CoroutineScope(Dispatchers.Main).launch {
@@ -90,8 +83,7 @@ class AccidentActivity : ComponentActivity() {
 
 
            }
-           val userIntent = Intent(nowContext, UserProfileActivity::class.java)
-           startActivity(userIntent)
+           finish()
        }
 
 
@@ -104,7 +96,7 @@ class AccidentActivity : ComponentActivity() {
             foregroundService?.userSafe()
             finish()
             val mainIntent = Intent(this, UserProfileActivity::class.java)
-            startActivity(mainIntent)
+            finish()
 
         }
     }
