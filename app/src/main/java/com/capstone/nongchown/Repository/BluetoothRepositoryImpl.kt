@@ -99,7 +99,10 @@ class BluetoothRepositoryImpl @Inject constructor(
             val pairedBluetoothDevices = pairedDevices.map { device ->
                 val m = device.javaClass.getMethod("isConnected")
                 val connected = m.invoke(device) as Boolean
-                Log.d("[로그]", "페어링 되어있는 기기 ( Name: ${device.name}, Address: ${device.address}, connected: ${connected})")
+                Log.d(
+                    "[로그]",
+                    "페어링 되어있는 기기 ( Name: ${device.name}, Address: ${device.address}, connected: ${connected})"
+                )
                 PairedBluetoothDevice(device, connected)
             }
 
@@ -113,7 +116,7 @@ class BluetoothRepositoryImpl @Inject constructor(
     /***
      * bluetoothDevice.bondState : 10(BOND_NONE_페어링 이전), 11(BOND_BONDING_페어링 중), 12(BOND_BONDED_페어링 완료)
      */
-    @SuppressLint("MissingPermission","DEPRECATION")
+    @SuppressLint("MissingPermission", "DEPRECATION")
     suspend override fun connectToDevice(bluetoothDevice: BluetoothDevice) {
         Log.d("[로그]", "[ ${Thread.currentThread().name} ]")
         Log.d("[로그]", "CONNECT TO DEVICE ( ${bluetoothDevice.name} : ${bluetoothDevice.address}")
@@ -123,9 +126,12 @@ class BluetoothRepositoryImpl @Inject constructor(
          * 순차적 실행 표현 가능
          * */
         withContext(Dispatchers.IO) {
-            Log.d("[로그]", "[ Dispatchers.IO 내부 : ${Thread.currentThread().name} ] - [ $coroutineContext ]")
+            Log.d(
+                "[로그]",
+                "[ Dispatchers.IO 내부 : ${Thread.currentThread().name} ] - [ $coroutineContext ]"
+            )
 
-            var bondResult : Boolean
+            var bondResult: Boolean
             /**  BluetoothDevice 객체가 아직 페어링되지 않았을 때 */
             if (bluetoothDevice.bondState != BluetoothDevice.BOND_BONDED) {
                 Log.d("[로그]", "페어링 이전 상태 : ${bluetoothDevice.bondState}")
@@ -149,10 +155,14 @@ class BluetoothRepositoryImpl @Inject constructor(
                                 BluetoothDevice.ACTION_BOND_STATE_CHANGED -> {
                                     Log.d("[로그]", "[ACTION BOND STATE CHANGED]")
 
-                                    val device = intent?.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
+                                    val device =
+                                        intent?.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
                                     device?.let {
 
-                                        Log.d("[로그]", "페어링 상태 변화 ( Name: ${device.name}, Address: ${device.address}, 페어링 상태 : : ${device.bondState} )")
+                                        Log.d(
+                                            "[로그]",
+                                            "페어링 상태 변화 ( Name: ${device.name}, Address: ${device.address}, 페어링 상태 : : ${device.bondState} )"
+                                        )
 
                                         when (it.bondState) {
 
@@ -195,7 +205,7 @@ class BluetoothRepositoryImpl @Inject constructor(
                     bluetoothDevice.createBond()
                 }
 
-                if(!bondResult){ // bond_none 선택
+                if (!bondResult) { // bond_none 선택
                     throw BondException("BOND_NONE")
                 }
             }
@@ -205,13 +215,19 @@ class BluetoothRepositoryImpl @Inject constructor(
             }
 
             bluetoothSocket = createBluetoothSocket(bluetoothDevice)
-            Log.d("[로그]", "연결 시작 전: ${bluetoothDevice.name} : ${bluetoothDevice.address} 페어링 상태 : ${bluetoothDevice.bondState}")
+            Log.d(
+                "[로그]",
+                "연결 시작 전: ${bluetoothDevice.name} : ${bluetoothDevice.address} 페어링 상태 : ${bluetoothDevice.bondState}"
+            )
 
             if (bluetoothSocket != null) {
                 try {
                     Log.d("[로그]", "bluetoothSocket != null")
                     bluetoothSocket!!.connect()
-                    Log.d("[로그]", "연결 성공: ${bluetoothDevice.name} : ${bluetoothDevice.address} 페어링 상태 : ${bluetoothDevice.bondState}")
+                    Log.d(
+                        "[로그]",
+                        "연결 성공: ${bluetoothDevice.name} : ${bluetoothDevice.address} 페어링 상태 : ${bluetoothDevice.bondState}"
+                    )
                 } catch (e: IOException) {
                     Log.e("[로그]", "블루투스 소켓 연결 실패", e)
                     throw e
@@ -221,7 +237,10 @@ class BluetoothRepositoryImpl @Inject constructor(
             }
         }
 
-        Log.d("[로그]", "[ Dispatchers.IO 외부 : ${Thread.currentThread().name} ] - [ $coroutineContext ]")
+        Log.d(
+            "[로그]",
+            "[ Dispatchers.IO 외부 : ${Thread.currentThread().name} ] - [ $coroutineContext ]"
+        )
     }
 
     @SuppressLint("MissingPermission")
@@ -269,7 +288,8 @@ class BluetoothRepositoryImpl @Inject constructor(
             var bytes: Int
             while (true) {
                 try {
-                    bytes = inputStream.read(buffer)                        // 주어진 buffer 크기(1024) 만큼 데이터를 읽고 총 몇 byte를 읽었는지 반환
+                    bytes =
+                        inputStream.read(buffer)                        // 주어진 buffer 크기(1024) 만큼 데이터를 읽고 총 몇 byte를 읽었는지 반환
                     val message = buffer.decodeToString(endIndex = bytes)
                     Log.d("[로그]", "수신된 메시지: $message")
 
@@ -351,7 +371,8 @@ class BluetoothRepositoryImpl @Inject constructor(
                 BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {
                     Log.d("[로그]", "DISCOVERY STARTED")
                     tempDeviceList.clear()
-                    pairedDeviceAddresses = bluetoothAdapter.bondedDevices.map { it.address }.toSet()  // device -> mac 주소로만 변환
+                    pairedDeviceAddresses = bluetoothAdapter.bondedDevices.map { it.address }
+                        .toSet()  // device -> mac 주소로만 변환
                 }
 
                 // DIS
@@ -365,19 +386,27 @@ class BluetoothRepositoryImpl @Inject constructor(
 
                 // DIS
                 BluetoothDevice.ACTION_FOUND -> {
-                    val device = intent?.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
+                    val device =
+                        intent?.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
                     device?.let { discoveredDevice ->
 
                         // 로그 찍기 용
                         if (discoveredDevice.name != null) {
-                            Log.d("[로그]", "FOUND ( Name: ${discoveredDevice.name}, Address: ${discoveredDevice.address} )")
+                            Log.d(
+                                "[로그]",
+                                "FOUND ( Name: ${discoveredDevice.name}, Address: ${discoveredDevice.address} )"
+                            )
                         }
 
                         // 기기 (mac 주소)가 이미 탐색되었는지 확인
-                        val isPaired = pairedDeviceAddresses?.contains(discoveredDevice.address) ?: false
+                        val isPaired =
+                            pairedDeviceAddresses?.contains(discoveredDevice.address) ?: false
 
                         // 중복 방지
-                        if (!isPaired && discoveredDevice.name != null && !tempDeviceList.contains(discoveredDevice)) {
+                        if (!isPaired && discoveredDevice.name != null && !tempDeviceList.contains(
+                                discoveredDevice
+                            )
+                        ) {
                             tempDeviceList.add(discoveredDevice)
                         }
                     }
