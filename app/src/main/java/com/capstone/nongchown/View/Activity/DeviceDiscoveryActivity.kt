@@ -1,7 +1,6 @@
 package com.capstone.nongchown.View.Activity
 
 import android.annotation.SuppressLint
-import android.bluetooth.BluetoothDevice
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -25,7 +24,6 @@ import com.capstone.nongchown.Model.ForegroundService
 import com.capstone.nongchown.R
 import com.capstone.nongchown.Utils.showToast
 import com.capstone.nongchown.ViewModel.BluetoothViewModel
-import com.capstone.nongchown.ViewModel.BluetoothViewModel.DiscoveryState
 import com.capstone.nongchown.databinding.ActivityDeviceDiscoveryBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
@@ -57,7 +55,6 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
 
         setupRecyclerView()
         startDiscovery()
-        showDiscoveredBluetoothDevice()
 
         connectDevice()
         cancelDiscovery()
@@ -77,45 +74,18 @@ class DeviceDiscoveryActivity : AppCompatActivity() {
         }
     }
 
-    private fun loading() {
-        Log.d("[로그]", "LOADING")
-        binding.textView5.text = "기기를 찾고 있습니다."
-        bluetoothViewModel.loadingDiscovery()
-    }
-
+    @SuppressLint("NotifyDataSetChanged")
     private fun startDiscovery() {
-        loading()
         bluetoothViewModel.startBluetoothDiscovery()
-    }
 
-    @SuppressLint("MissingPermission")
-    private fun showDiscoveredBluetoothDevice() {
-        // UNREGISTER RECEIVER
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                bluetoothViewModel.bluetoothDiscoveryState.collect { state ->
-
-                    when (state) {
-                        is DiscoveryState.Loading -> loading()
-                        is DiscoveryState.Success -> success(state.devices)
-                        is DiscoveryState.Error -> Log.d("state error", "STATE ERROR")
-                    }
+                bluetoothViewModel.discoverydeviceList.collect { devices ->
+                    discovredDeviceAdapter.deviceList = devices
+                    discovredDeviceAdapter.notifyDataSetChanged()
                 }
             }
         }
-    }
-
-
-    @SuppressLint("MissingPermission", "NotifyDataSetChanged")
-    private fun success(devices: List<BluetoothDevice>) {
-        Log.d("[로그]", "UPDATE LIST")
-        // 디바이스 리스트를 화면에 표시하는 로직 구현
-        devices?.forEach { device ->
-            Log.d("[로그]", "SUCCESS ( Name: ${device.name}, Address: ${device.address} )")
-        }
-
-        discovredDeviceAdapter.deviceList = devices
-        discovredDeviceAdapter.notifyDataSetChanged()
     }
 
     fun connectDevice() {

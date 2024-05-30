@@ -58,6 +58,64 @@ class BluetoothRepositoryImpl @Inject constructor(
         return _discoveredDeviceList
     }
 
+    @Suppress("DEPRECATION", "MissingPermission")
+    private val deviceScanReceiver = object : BroadcastReceiver() {
+        val tempDeviceList = mutableListOf<BluetoothDevice>()
+        var pairedDeviceAddresses: Set<String>? = null
+
+        override fun onReceive(context: Context?, intent: Intent?) {
+
+            var action = ""
+            if (intent != null) {
+                action = intent.action.toString() //입력된 action
+            }
+
+            when (action) {
+                BluetoothAdapter.ACTION_STATE_CHANGED -> {
+                    Log.d("[로그]", "ACTION STATE CHANGED")
+                }
+
+                // DIS
+                BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {
+                    Log.d("[로그]", "DISCOVERY STARTED")
+                    tempDeviceList.clear()
+                    pairedDeviceAddresses = bluetoothAdapter.bondedDevices.map { it.address }.toSet()  // device -> mac 주소로만 변환
+                }
+
+                // DIS
+                BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
+                    Log.d("[로그]", "DISCOVERY FINISHED")
+                    pairedDeviceAddresses = null
+                    Log.d("[로그]", "DISCOVERY CANCEL - DISCOVERY_FINISHED")
+                    bluetoothAdapter.cancelDiscovery()  // 탐색 중, 탐색 후 둘다 적용..
+                }
+
+                // DIS
+                BluetoothDevice.ACTION_FOUND -> {
+                    val device = intent?.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
+                    device?.let { discoveredDevice ->
+
+                        // 로그 찍기 용
+                        if (discoveredDevice.name != null) {
+                            Log.d("[로그]", "FOUND ( Name: ${discoveredDevice.name}, Address: ${discoveredDevice.address} )")
+                        }
+
+                        // 기기 (mac 주소)가 이미 탐색되었는지 확인
+                        val isPaired = pairedDeviceAddresses?.contains(discoveredDevice.address) ?: false
+
+                        // 중복 방지
+                        if (!isPaired && discoveredDevice.name != null && !tempDeviceList.contains(discoveredDevice)) {
+                            Log.d("[로그]", "ADD")
+                            tempDeviceList.add(discoveredDevice)
+                            _discoveredDeviceList.value = tempDeviceList.toList()
+                        }
+                    }
+                } //
+
+            }
+        }
+    }
+
     @SuppressLint("MissingPermission")
     override fun getPairedDevices(): StateFlow<List<PairedBluetoothDevice>> {
         Log.d("[로그]", "GET PAIRED DEVICES")
@@ -275,7 +333,6 @@ class BluetoothRepositoryImpl @Inject constructor(
         }
     }
 
-
     override fun isBluetoothEnabled(): Boolean {
         return if (bluetoothAdapter?.isEnabled == false) {                  // 기기의 블루투스 비활성화 상태
             false
@@ -301,63 +358,6 @@ class BluetoothRepositoryImpl @Inject constructor(
         } finally {
             bluetoothSocket = null // 소켓 참조 제거
             Log.d("[로그]", "소켓 닫기")
-        }
-    }
-
-    @Suppress("DEPRECATION", "MissingPermission")
-    private val deviceScanReceiver = object : BroadcastReceiver() {
-        val tempDeviceList = mutableListOf<BluetoothDevice>()
-        var pairedDeviceAddresses: Set<String>? = null
-
-        override fun onReceive(context: Context?, intent: Intent?) {
-
-            var action = ""
-            if (intent != null) {
-                action = intent.action.toString() //입력된 action
-            }
-
-            when (action) {
-                BluetoothAdapter.ACTION_STATE_CHANGED -> {
-                    Log.d("[로그]", "ACTION STATE CHANGED")
-                }
-
-                // DIS
-                BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {
-                    Log.d("[로그]", "DISCOVERY STARTED")
-                    tempDeviceList.clear()
-                    pairedDeviceAddresses = bluetoothAdapter.bondedDevices.map { it.address }.toSet()  // device -> mac 주소로만 변환
-                }
-
-                // DIS
-                BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
-                    Log.d("[로그]", "DISCOVERY FINISHED")
-                    _discoveredDeviceList.value = tempDeviceList
-                    pairedDeviceAddresses = null
-                    Log.d("[로그]", "DISCOVERY CANCEL - DISCOVERY_FINISHED")
-                    bluetoothAdapter.cancelDiscovery()  // 탐색 중, 탐색 후 둘다 적용..
-                }
-
-                // DIS
-                BluetoothDevice.ACTION_FOUND -> {
-                    val device = intent?.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
-                    device?.let { discoveredDevice ->
-
-                        // 로그 찍기 용
-                        if (discoveredDevice.name != null) {
-                            Log.d("[로그]", "FOUND ( Name: ${discoveredDevice.name}, Address: ${discoveredDevice.address} )")
-                        }
-
-                        // 기기 (mac 주소)가 이미 탐색되었는지 확인
-                        val isPaired = pairedDeviceAddresses?.contains(discoveredDevice.address) ?: false
-
-                        // 중복 방지
-                        if (!isPaired && discoveredDevice.name != null && !tempDeviceList.contains(discoveredDevice)) {
-                            tempDeviceList.add(discoveredDevice)
-                        }
-                    }
-                }
-
-            }
         }
     }
 
