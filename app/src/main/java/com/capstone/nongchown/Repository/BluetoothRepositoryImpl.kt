@@ -35,11 +35,9 @@ class BluetoothRepositoryImpl @Inject constructor(
 ) : BluetoothRepository {
 
     private val _discoveredDeviceList = MutableStateFlow<List<BluetoothDevice>>(emptyList())
-    private val _pairedDeviceList = MutableStateFlow<List<BluetoothDevice>>(emptyList())
-    private val _pairedDeviceList2 = MutableStateFlow<List<PairedBluetoothDevice>>(emptyList())
+    private val _pairedDeviceList = MutableStateFlow<List<PairedBluetoothDevice>>(emptyList())
 
     private var bluetoothSocket: BluetoothSocket? = null
-
     val geoConverter = GeoConverter()
 
     @SuppressLint("MissingPermission")
@@ -61,39 +59,15 @@ class BluetoothRepositoryImpl @Inject constructor(
     }
 
     @SuppressLint("MissingPermission")
-    override fun getPairedDevices(): StateFlow<List<BluetoothDevice>> {
+    override fun getPairedDevices(): StateFlow<List<PairedBluetoothDevice>> {
         Log.d("[로그]", "GET PAIRED DEVICES")
 
         if (bluetoothAdapter != null) {
             // Ensure Bluetooth is enabled
             if (!bluetoothAdapter.isEnabled) {
-                // You might want to prompt the user to enable Bluetooth
-            }
-            // Get the list of paired devices
-            val pairedDevices: Set<BluetoothDevice> = bluetoothAdapter.bondedDevices
 
-            pairedDevices.forEach { device ->
-                Log.d("[로그]", "페어링 되어있는 기기 ( Name: ${device.name}, Address: ${device.address} )")
-                val m = device.javaClass.getMethod("isConnected")
             }
 
-            _pairedDeviceList.value = pairedDevices.toList()
-        } else {
-            // Bluetooth is not supported on this device
-        }
-        return _pairedDeviceList
-    }
-
-    @SuppressLint("MissingPermission")
-    override fun getPairedDevices2(): StateFlow<List<PairedBluetoothDevice>> {
-        Log.d("[로그]", "GET PAIRED DEVICES")
-
-        if (bluetoothAdapter != null) {
-            // Ensure Bluetooth is enabled
-            if (!bluetoothAdapter.isEnabled) {
-                // You might want to prompt the user to enable Bluetooth
-            }
-            // Get the list of paired devices
             val pairedDevices: Set<BluetoothDevice> = bluetoothAdapter.bondedDevices
 
             val pairedBluetoothDevices = pairedDevices.map { device ->
@@ -103,17 +77,17 @@ class BluetoothRepositoryImpl @Inject constructor(
                 PairedBluetoothDevice(device, connected)
             }
 
-            _pairedDeviceList2.value = pairedBluetoothDevices.toList()
+            _pairedDeviceList.value = pairedBluetoothDevices.toList()
         } else {
 
         }
-        return _pairedDeviceList2
+        return _pairedDeviceList
     }
 
     /***
      * bluetoothDevice.bondState : 10(BOND_NONE_페어링 이전), 11(BOND_BONDING_페어링 중), 12(BOND_BONDED_페어링 완료)
      */
-    @SuppressLint("MissingPermission","DEPRECATION")
+    @SuppressLint("MissingPermission", "DEPRECATION")
     suspend override fun connectToDevice(bluetoothDevice: BluetoothDevice) {
         Log.d("[로그]", "[ ${Thread.currentThread().name} ]")
         Log.d("[로그]", "CONNECT TO DEVICE ( ${bluetoothDevice.name} : ${bluetoothDevice.address}")
@@ -125,7 +99,7 @@ class BluetoothRepositoryImpl @Inject constructor(
         withContext(Dispatchers.IO) {
             Log.d("[로그]", "[ Dispatchers.IO 내부 : ${Thread.currentThread().name} ] - [ $coroutineContext ]")
 
-            var bondResult : Boolean
+            var bondResult: Boolean
             /**  BluetoothDevice 객체가 아직 페어링되지 않았을 때 */
             if (bluetoothDevice.bondState != BluetoothDevice.BOND_BONDED) {
                 Log.d("[로그]", "페어링 이전 상태 : ${bluetoothDevice.bondState}")
@@ -195,7 +169,7 @@ class BluetoothRepositoryImpl @Inject constructor(
                     bluetoothDevice.createBond()
                 }
 
-                if(!bondResult){ // bond_none 선택
+                if (!bondResult) { // bond_none 선택
                     throw BondException("BOND_NONE")
                 }
             }

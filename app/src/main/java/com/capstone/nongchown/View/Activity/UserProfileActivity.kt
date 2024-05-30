@@ -280,7 +280,7 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         toolbar.setNavigationOnClickListener {
             checkBluetoothEnabledState { // 밑의 동작 람다식으로 넣음
                 drawerLayout.openDrawer(GravityCompat.START)
-                bluetoothViewModel.getPairedDevices2()
+                bluetoothViewModel.getPairedDevices()
             }
         }
     }
@@ -318,7 +318,7 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                bluetoothViewModel.pairedDevices2.collect { devices ->
+                bluetoothViewModel.pairedDevices.collect { devices ->
                     pairedDeviceAdapter.updateDevices(devices)
                 }
             }
