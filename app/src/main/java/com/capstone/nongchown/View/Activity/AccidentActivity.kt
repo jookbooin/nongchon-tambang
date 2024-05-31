@@ -38,9 +38,9 @@ class AccidentActivity : ComponentActivity() {
             val binder = service as ForegroundService.LocalBinder
             foregroundService = binder.getService()
             if (countData == 0) {
-                foregroundService?.userAccident()
+                //foregroundService?.userAccident()
             } else {
-                foregroundService?.changeTimer(countData)
+                //foregroundService?.changeTimer(countData)
             }
 
         }
@@ -52,9 +52,9 @@ class AccidentActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        foregroundService?.getTimerCount()?.observe(this) { count ->
-            updateTimerText(count)
-        }
+        //foregroundService?.getTimerCount()?.observe(this) { count ->
+         //   updateTimerText(count)
+        //}
 
     }
 
@@ -71,12 +71,12 @@ class AccidentActivity : ComponentActivity() {
 
         val intent = intent
         timer = savedInstanceState?.getInt("timer") ?: intent.getIntExtra("timer", 0)
-
+        updateTimerText(timer)
        CoroutineScope(Dispatchers.Main).launch {
            while (timer > 0) {
-               delay(1000)
                timer--
                updateTimerText(timer)
+               delay(1000)
 
 
            }

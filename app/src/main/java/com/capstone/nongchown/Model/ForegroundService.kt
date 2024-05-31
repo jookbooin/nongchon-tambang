@@ -15,9 +15,7 @@ import android.location.Location
 import android.media.RingtoneManager
 import android.os.Binder
 import android.os.Build
-import android.os.Handler
 import android.os.IBinder
-import android.os.Looper
 import android.telephony.SmsManager
 import android.util.Log
 import android.widget.Toast
@@ -25,9 +23,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import androidx.core.location.component1
-import androidx.core.location.component2
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.capstone.nongchown.R
 import com.capstone.nongchown.Repository.BluetoothRepository
@@ -47,7 +42,6 @@ class ForegroundService : Service() {
 
     @Inject
     lateinit var bluetoothRepository: BluetoothRepository
-
     private val serviceScope = CoroutineScope(Dispatchers.IO)
 
     companion object {
@@ -63,17 +57,8 @@ class ForegroundService : Service() {
         }
     }
 
-    private var allowRebind: Boolean = false   // onRebind() 메소드가 사용될지 말지를 결정함
-
     private lateinit var notificationManager: NotificationManager
-
-    val MAIN_NOTIFICATION = "1"
-    val MAIN_ID = 1
-
-
-    public var count = MutableLiveData<Int>(20)
-    private lateinit var runnable: Runnable
-    private val handler = Handler(Looper.getMainLooper())
+    public var count = MutableLiveData<Int>(30)
     private lateinit var nowContext: Context
     private val binder = LocalBinder()
     private var accidentFlag: Boolean = false
@@ -153,16 +138,15 @@ class ForegroundService : Service() {
 
         serviceScope.launch {
 
-            addressConverter =
-                AddressConverter(nowContext, object : AddressConverter.GeocoderListener {
-                    override fun sendAddress(address: Address) {
-                        Log.d("[로그]", "Address 최신화")
-                        serviceScope.launch { // 데이터가 전달될 확률 (사고날 확률) 적으니
-                            addressChannel.send(address)
-                        }
+            addressConverter = AddressConverter(nowContext, object : AddressConverter.GeocoderListener {
+                override fun sendAddress(address: Address) {
+                    Log.d("[로그]", "Address 최신화")
+                    serviceScope.launch { // 데이터가 전달될 확률 (사고날 확률) 적으니
+                        addressChannel.send(address)
                     }
                 }
-                )
+            }
+            )
 
             bluetoothRepository.readDataFromDevice().collect { location ->
                 accidentFlag = true
@@ -186,7 +170,7 @@ class ForegroundService : Service() {
                         nowContext,
                         0,
                         accidentIntent,
-                        PendingIntent.FLAG_IMMUTABLE
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                     )
 
                     val generalNotification2 =
@@ -245,15 +229,10 @@ class ForegroundService : Service() {
                     val sharedPreferences = getSharedPreferences("user", Context.MODE_PRIVATE)
                     val userID = sharedPreferences.getString("ID", "")
                     val email = userID.toString()
-                    val accidentAddress =
-                        addressChannel.receive().let { AddressConverter.convertAddressToString(it) }
-                            ?: "위치 정보를 확인할 수 없습니다."
+                    val accidentAddress = addressChannel.receive().let {AddressConverter.convertAddressToString(it) }?:"위치 정보를 확인할 수 없습니다."
                     val receiveLocation = locationChannel.receive()
                     Log.d("[로그]", "$accidentAddress")
-                    Log.d(
-                        "[로그]",
-                        "latitiude : ${receiveLocation.latitude}, longitude : ${receiveLocation.longitude}"
-                    )
+                    Log.d("[로그]", "latitiude : ${receiveLocation.latitude}, longitude : ${receiveLocation.longitude}")
 
                     firebase.fetchUserByDocumentId(email) { userInfo ->
                         if (userInfo != null) {
@@ -268,14 +247,11 @@ class ForegroundService : Service() {
                             ) {//권한이 없다면
 
                             } else { //권한이 있다면 SMS를 보낸다.
-                                val smsText: String = "${userInfo.name}님께서 사고를 당하셨습니다."
 
+                                val smsText :String = "${userInfo.name}님께서 사고를 당하셨습니다."
                                 val smsManager = SmsManager.getDefault()
-
                                 try {
-
-
-                                    userInfo.emergencyContactList.forEach { number ->
+                                    userInfo.emergencyContactList.forEach{number->
                                         smsManager.sendTextMessage(
                                             "+82" + number,
                                             null,
@@ -283,7 +259,6 @@ class ForegroundService : Service() {
                                             null,
                                             null
                                         )
-
                                         smsManager.sendTextMessage(
                                             "+82" + number,
                                             null,
@@ -305,19 +280,10 @@ class ForegroundService : Service() {
                         }
 
                         changeAccidentFlag(false)
-                        count.value = 20
+                        count.value=30
                     }
-
-                    firebase.recordAccidentLocation(
-                        receiveLocation.latitude,
-                        receiveLocation.longitude
-                    )
-
-
                 }
-
                 delay(1000)
-
             }
         }
 
@@ -338,13 +304,9 @@ class ForegroundService : Service() {
         sendBroadcast(intent)
     }
 
-    private fun timer() {
-
-    }
-
     public fun userSafe() {
         changeAccidentFlag(false)
-        count.postValue(20)
+        count.postValue(30)
 
         val updatedNotification = NotificationCompat.Builder(nowContext, "noti")
             .setContentTitle("농촌 실행중")
@@ -361,31 +323,16 @@ class ForegroundService : Service() {
             ) {
                 notify(2, updatedNotification)
             }
-
         }
 
     }
-
     override fun onTaskRemoved(rootIntent: Intent?) {
         stopSelf()
         super.onTaskRemoved(rootIntent)
     }
 
-    fun getTimerCount(): LiveData<Int> {
-        return count
-    }
-
-    public fun userAccident() {
-        changeAccidentFlag(true)
-        count.postValue(20)
-    }
-
     public fun changeAccidentFlag(flag: Boolean) {
         accidentFlag = flag
-    }
-
-    public fun changeTimer(timer: Int) {
-        count.postValue(timer)
     }
 
     fun showScreen(data: Int) {
