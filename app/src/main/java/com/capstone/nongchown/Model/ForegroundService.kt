@@ -15,9 +15,7 @@ import android.location.Location
 import android.media.RingtoneManager
 import android.os.Binder
 import android.os.Build
-import android.os.Handler
 import android.os.IBinder
-import android.os.Looper
 import android.telephony.SmsManager
 import android.util.Log
 import android.widget.Toast
@@ -25,7 +23,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.capstone.nongchown.R
 import com.capstone.nongchown.Repository.BluetoothRepository
@@ -45,7 +42,6 @@ class ForegroundService : Service() {
 
     @Inject
     lateinit var bluetoothRepository: BluetoothRepository
-
     private val serviceScope = CoroutineScope(Dispatchers.IO)
 
     companion object {
@@ -61,17 +57,8 @@ class ForegroundService : Service() {
         }
     }
 
-    private var allowRebind: Boolean = false   // onRebind() 메소드가 사용될지 말지를 결정함
-
     private lateinit var notificationManager: NotificationManager
-
-    val MAIN_NOTIFICATION = "1"
-    val MAIN_ID = 1
-
-
-    public var count = MutableLiveData<Int>(20)
-    private lateinit var runnable: Runnable
-    private val handler = Handler(Looper.getMainLooper())
+    public var count = MutableLiveData<Int>(30)
     private lateinit var nowContext: Context
     private val binder = LocalBinder()
     private var accidentFlag: Boolean = false
@@ -183,7 +170,7 @@ class ForegroundService : Service() {
                         nowContext,
                         0,
                         accidentIntent,
-                        PendingIntent.FLAG_IMMUTABLE
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                     )
 
                     val generalNotification2 =
@@ -260,13 +247,10 @@ class ForegroundService : Service() {
                             ) {//권한이 없다면
 
                             } else { //권한이 있다면 SMS를 보낸다.
+
                                 val smsText :String = "${userInfo.name}님께서 사고를 당하셨습니다."
-
                                 val smsManager = SmsManager.getDefault()
-
                                 try {
-
-
                                     userInfo.emergencyContactList.forEach{number->
                                         smsManager.sendTextMessage(
                                             "+82" + number,
@@ -275,7 +259,6 @@ class ForegroundService : Service() {
                                             null,
                                             null
                                         )
-
                                         smsManager.sendTextMessage(
                                             "+82" + number,
                                             null,
@@ -297,22 +280,10 @@ class ForegroundService : Service() {
                         }
 
                         changeAccidentFlag(false)
-                        count.value=20
+                        count.value=30
                     }
-
-//                    bluetoothRepository.readDataFromDevice().collect { location ->
-//                        val (latitude, longitude) = location
-//                        firebase.recordAccidentLocation(
-//                            latitude,
-//                            longitude
-//                        )
-//                    }
-
-
                 }
-
                 delay(1000)
-
             }
         }
 
@@ -333,13 +304,9 @@ class ForegroundService : Service() {
         sendBroadcast(intent)
     }
 
-    private fun timer() {
-
-    }
-
     public fun userSafe() {
         changeAccidentFlag(false)
-        count.postValue(20)
+        count.postValue(30)
 
         val updatedNotification = NotificationCompat.Builder(nowContext, "noti")
             .setContentTitle("농촌 실행중")
@@ -356,7 +323,6 @@ class ForegroundService : Service() {
             ) {
                 notify(2, updatedNotification)
             }
-
         }
 
     }
@@ -364,21 +330,9 @@ class ForegroundService : Service() {
         stopSelf()
         super.onTaskRemoved(rootIntent)
     }
-    fun getTimerCount(): LiveData<Int> {
-        return count
-    }
-
-    public fun userAccident() {
-        changeAccidentFlag(true)
-        count.postValue(20)
-    }
 
     public fun changeAccidentFlag(flag: Boolean) {
         accidentFlag = flag
-    }
-
-    public fun changeTimer(timer: Int) {
-        count.postValue(timer)
     }
 
     fun showScreen(data: Int) {
