@@ -9,8 +9,8 @@ import kotlinx.coroutines.flow.StateFlow
 interface BluetoothRepository {
 
     fun startDiscovery(): StateFlow<List<BluetoothDevice>>
-    fun getPairedDevices(): StateFlow<List<BluetoothDevice>>
-    fun getPairedDevices2(): StateFlow<List<PairedBluetoothDevice>>
+//    fun getPairedDevices(): StateFlow<List<BluetoothDevice>>
+    fun getPairedDevices(): StateFlow<List<PairedBluetoothDevice>>
     suspend fun connectToDevice(bluetoothDevice: BluetoothDevice)
     fun stopDiscovery()
 //    fun cancelDiscovery()
