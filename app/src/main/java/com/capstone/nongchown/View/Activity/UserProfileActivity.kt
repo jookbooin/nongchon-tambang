@@ -72,6 +72,7 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
     private lateinit var email: String
     private lateinit var age: String
     private lateinit var gender: String
+    private var isEditble = true
     private val emergencyContactList = mutableListOf<String>()
 
     private val emergencyAddButton: Button by lazy {
@@ -135,48 +136,69 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
 
         saveButton.setOnClickListener {
             try {
-                Log.d("[로그]", "저장 버튼 클릭")
-                emergencyContactList.clear()
-                for (i in emergencyContacts.childCount - 1 downTo 0) {
-                    val eContact = emergencyContacts.getChildAt(i)
-                    if (eContact is EditText && eContact.text.isEmpty()) {
-                        emergencyContacts.removeView(eContact)
+                if(isEditble){
+                    saveButton.text="수정하기"
+                    Log.d("[로그]", "저장 버튼 클릭")
+                    emergencyContactList.clear()
+                    for (i in emergencyContacts.childCount - 1 downTo 0) {
+                        val eContact = emergencyContacts.getChildAt(i)
+                        if (eContact is EditText && eContact.text.isEmpty()) {
+                            emergencyContacts.removeView(eContact)
+                        }
                     }
-                }
-                emergencyContacts.children.forEach { emergencyContact ->
-                    if (emergencyContact is EditText) {
-                        emergencyContactList.add(emergencyContact.text.toString())
+                    emergencyContacts.children.forEach { emergencyContact ->
+                        if (emergencyContact is EditText) {
+                            emergencyContactList.add(emergencyContact.text.toString())
+                        }
                     }
-                }
 
-                val userInfo = UserProfileViewModel().userProfileSave(
-                    UserInfo(
-                        userName.text.toString(), userEmail.text.toString(), userAge.text.toString(), userGender.selectedItem.toString(), emergencyContactList
+                    val userInfo = UserProfileViewModel().userProfileSave(
+                        UserInfo(
+                            userName.text.toString(), userEmail.text.toString(), userAge.text.toString(), userGender.selectedItem.toString(), emergencyContactList
+                        )
                     )
-                )
-                name = userInfo.name
-                email = userInfo.email
-                age = userInfo.age
-                gender = userInfo.gender
-                emergencyContactList.clear()
-                Log.d("[로그]", "emergencyContactList.clear(): $emergencyContactList")
-                emergencyContactList.addAll(userInfo.emergencyContactList)
+                    name = userInfo.name
+                    email = userInfo.email
+                    age = userInfo.age
+                    gender = userInfo.gender
+                    emergencyContactList.clear()
+                    Log.d("[로그]", "emergencyContactList.clear(): $emergencyContactList")
+                    emergencyContactList.addAll(userInfo.emergencyContactList)
 
-                userName.setText(userInfo.name)
-                userEmail.setText(userInfo.email)
-                userAge.setText(userInfo.age)
-                userGender.setSelection((if (userInfo.gender == "남") 0 else 1))
-                emergencyContacts.removeViews(0, emergencyContacts.childCount - 1)
-                for (i: Int in 0..<userInfo.emergencyContactList.size) {
-                    addEmergencyContact(emergencyContacts, userInfo.emergencyContactList[i])
+                    userName.setText(userInfo.name)
+                    userEmail.setText(userInfo.email)
+                    userAge.setText(userInfo.age)
+                    userGender.setSelection((if (userInfo.gender == "남") 0 else 1))
+                    emergencyContacts.removeViews(0, emergencyContacts.childCount - 1)
+                    for (i: Int in 0..<userInfo.emergencyContactList.size) {
+                        addEmergencyContact(emergencyContacts, userInfo.emergencyContactList[i])
+                    }
+
+                    val sharedPreferences = getSharedPreferences("user", Context.MODE_PRIVATE)
+                    val editor = sharedPreferences.edit()
+                    editor.putString("ID", email)
+                    editor.apply()
+
+                    isEditble=false
+                    userName.isFocusable=isEditble
+                    userEmail.isFocusable = isEditble
+                    userAge.isFocusable=isEditble
+                    emergencyAddButton.isEnabled=isEditble
+                } else{
+                    saveButton.text="저장하기"
+                    isEditble=true
+                    userName.isFocusable=isEditble
+                    userName.isFocusableInTouchMode = isEditble
+                    userEmail.isFocusable = isEditble
+                    userEmail.isFocusableInTouchMode = isEditble
+                    userAge.isFocusable=isEditble
+                    userAge.isFocusableInTouchMode = isEditble
+                    emergencyAddButton.isEnabled=isEditble
+
+                    saveButton.isEnabled = false
+
                 }
 
-                val sharedPreferences = getSharedPreferences("user", Context.MODE_PRIVATE)
-                val editor = sharedPreferences.edit()
-                editor.putString("ID", email)
-                editor.apply()
-
-                saveButton.isEnabled = false
             } catch (e: IllegalArgumentException) {
                 Toast.makeText(this, "입력 오류: ${e.message}", Toast.LENGTH_LONG).show()
             }
@@ -209,8 +231,11 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         val sharedPreferences = getSharedPreferences("user", Context.MODE_PRIVATE)
         val userID = sharedPreferences.getString("ID", "")
         email = userID.toString()
-        if(email=="")
+        if(email==""){
+            saveButton.text="저장하기"
             return
+        }
+
 
         lifecycleScope.launch {
             val userInfo = userprofileViewModel.loadStoredData(email)
@@ -222,6 +247,12 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
             for (i: Int in 0..<userInfo.emergencyContactList.size) {
                 addEmergencyContact(emergencyContacts, userInfo.emergencyContactList[i])
             }
+            isEditble=false
+            userName.isFocusable=isEditble
+            userEmail.isFocusable = isEditble
+            userAge.isFocusable=isEditble
+            saveButton.text= "수정하기"
+
         }
         Log.d("[로그]", "initializing complete")
     }
@@ -236,7 +267,9 @@ class UserProfileActivity : AppCompatActivity(), NavigationView.OnNavigationItem
             saveButton.isEnabled = true
 
             eContact.setOnTouchListener { v, event ->
-                if (event.action == MotionEvent.ACTION_UP) {
+                if (event.action == MotionEvent.ACTION_UP && isEditble) {
+                    eContact.isFocusable=true
+                    eContact.isFocusableInTouchMode = true
                     val clearDrawable = eContact.compoundDrawablesRelative[2]
                     if (clearDrawable != null && event.rawX >= (eContact.right - clearDrawable.bounds.width())) {
                         eContact.setText("")

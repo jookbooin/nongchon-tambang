@@ -25,8 +25,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import androidx.core.location.component1
-import androidx.core.location.component2
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.capstone.nongchown.R
@@ -153,16 +151,15 @@ class ForegroundService : Service() {
 
         serviceScope.launch {
 
-            addressConverter =
-                AddressConverter(nowContext, object : AddressConverter.GeocoderListener {
-                    override fun sendAddress(address: Address) {
-                        Log.d("[로그]", "Address 최신화")
-                        serviceScope.launch { // 데이터가 전달될 확률 (사고날 확률) 적으니
-                            addressChannel.send(address)
-                        }
+            addressConverter = AddressConverter(nowContext, object : AddressConverter.GeocoderListener {
+                override fun sendAddress(address: Address) {
+                    Log.d("[로그]", "Address 최신화")
+                    serviceScope.launch { // 데이터가 전달될 확률 (사고날 확률) 적으니
+                        addressChannel.send(address)
                     }
                 }
-                )
+            }
+            )
 
             bluetoothRepository.readDataFromDevice().collect { location ->
                 accidentFlag = true
@@ -245,15 +242,10 @@ class ForegroundService : Service() {
                     val sharedPreferences = getSharedPreferences("user", Context.MODE_PRIVATE)
                     val userID = sharedPreferences.getString("ID", "")
                     val email = userID.toString()
-                    val accidentAddress =
-                        addressChannel.receive().let { AddressConverter.convertAddressToString(it) }
-                            ?: "위치 정보를 확인할 수 없습니다."
+                    val accidentAddress = addressChannel.receive().let {AddressConverter.convertAddressToString(it) }?:"위치 정보를 확인할 수 없습니다."
                     val receiveLocation = locationChannel.receive()
                     Log.d("[로그]", "$accidentAddress")
-                    Log.d(
-                        "[로그]",
-                        "latitiude : ${receiveLocation.latitude}, longitude : ${receiveLocation.longitude}"
-                    )
+                    Log.d("[로그]", "latitiude : ${receiveLocation.latitude}, longitude : ${receiveLocation.longitude}")
 
                     firebase.fetchUserByDocumentId(email) { userInfo ->
                         if (userInfo != null) {
@@ -268,14 +260,14 @@ class ForegroundService : Service() {
                             ) {//권한이 없다면
 
                             } else { //권한이 있다면 SMS를 보낸다.
-                                val smsText: String = "${userInfo.name}님께서 사고를 당하셨습니다."
+                                val smsText :String = "${userInfo.name}님께서 사고를 당하셨습니다."
 
                                 val smsManager = SmsManager.getDefault()
 
                                 try {
 
 
-                                    userInfo.emergencyContactList.forEach { number ->
+                                    userInfo.emergencyContactList.forEach{number->
                                         smsManager.sendTextMessage(
                                             "+82" + number,
                                             null,
@@ -305,13 +297,16 @@ class ForegroundService : Service() {
                         }
 
                         changeAccidentFlag(false)
-                        count.value = 20
+                        count.value=20
                     }
 
-                    firebase.recordAccidentLocation(
-                        receiveLocation.latitude,
-                        receiveLocation.longitude
-                    )
+//                    bluetoothRepository.readDataFromDevice().collect { location ->
+//                        val (latitude, longitude) = location
+//                        firebase.recordAccidentLocation(
+//                            latitude,
+//                            longitude
+//                        )
+//                    }
 
 
                 }
@@ -365,12 +360,10 @@ class ForegroundService : Service() {
         }
 
     }
-
     override fun onTaskRemoved(rootIntent: Intent?) {
         stopSelf()
         super.onTaskRemoved(rootIntent)
     }
-
     fun getTimerCount(): LiveData<Int> {
         return count
     }
