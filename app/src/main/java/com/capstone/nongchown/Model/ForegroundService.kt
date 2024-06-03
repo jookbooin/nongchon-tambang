@@ -231,6 +231,7 @@ class ForegroundService : Service() {
                     val email = userID.toString()
                     val accidentAddress = addressChannel.receive().let {AddressConverter.convertAddressToString(it) }?:"위치 정보를 확인할 수 없습니다."
                     val receiveLocation = locationChannel.receive()
+                    val locationText = "위도: ${receiveLocation.latitude}, 경도: ${receiveLocation.longitude}"
                     Log.d("[로그]", "$accidentAddress")
                     Log.d("[로그]", "latitiude : ${receiveLocation.latitude}, longitude : ${receiveLocation.longitude}")
 
@@ -259,6 +260,14 @@ class ForegroundService : Service() {
                                             null,
                                             null
                                         )
+                                        smsManager.sendTextMessage(
+                                            "+82" + number,
+                                            null,
+                                            locationText,
+                                            null,
+                                            null
+                                        )
+
                                         smsManager.sendTextMessage(
                                             "+82" + number,
                                             null,
