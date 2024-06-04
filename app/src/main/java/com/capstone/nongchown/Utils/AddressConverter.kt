@@ -59,7 +59,6 @@ class AddressConverter(context: Context, private val geocoderListener: GeocoderL
             val result = mutableListOf<String>()
             result.add(addressLine)
             result.add(postalCode)
-//            result.add("(위도: $latitude, 경도: $longitude)")
             return result.joinToString(" ")
         }
     }

@@ -252,6 +252,7 @@ class ForegroundService : Service() {
                                 val smsText :String = "${userInfo.name}님께서 사고를 당하셨습니다."
                                 val smsManager = SmsManager.getDefault()
                                 try {
+                                    Log.d("로그","accidentadd : $accidentAddress")
                                     userInfo.emergencyContactList.forEach{number->
                                         smsManager.sendTextMessage(
                                             "+82" + number,
@@ -263,6 +264,7 @@ class ForegroundService : Service() {
                                         smsManager.sendTextMessage(
                                             "+82" + number,
                                             null,
+
                                             locationText,
                                             null,
                                             null
