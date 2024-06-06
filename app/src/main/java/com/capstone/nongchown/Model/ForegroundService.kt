@@ -150,7 +150,7 @@ class ForegroundService : Service() {
 
             bluetoothRepository.readDataFromDevice().collect { location ->
                 accidentFlag = true
-                showScreen(count.value ?: 0)
+                //showScreen(count.value ?: 0)
                 bluetoothRepository.sendDataToDevice()
                 addressConverter.getAddressFromLocation(location) // 성공시 oncreate의 fun sendAddress(address: Address) 로 이동해서 receiveAddress 변경 (비동기..)
                 locationChannel.send(location)
