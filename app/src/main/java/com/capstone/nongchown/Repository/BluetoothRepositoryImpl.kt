@@ -320,7 +320,6 @@ class BluetoothRepositoryImpl @Inject constructor(
                         Log.d("[로그]", "40초 동안 수신 받은 buffer 초기화")
                         inputStream.read(buffer)
                     }
-                    Log.d("[로그]", "30초 이후 buffer 초기화 ")
 
                 } catch (e: IOException) {
                     Log.e("[로그]", "데이터 읽기 중 오류 발생 OR Socket 중단", e)
