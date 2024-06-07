@@ -7,7 +7,9 @@
     android:layout_marginBottom="20dp"
     android:autofillHints="phone"
     android:background="@drawable/edittextstyle"
+    android:drawableEnd="@drawable/ic_edittext_clear"
     android:hint="비상연락처"
+    android:focusable="false"
     android:inputType="phone"
     android:padding="10dp" />
 

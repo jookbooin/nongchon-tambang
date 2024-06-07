@@ -4,4 +4,8 @@
         <item>남</item>
         <item>여</item>
     </string-array>
+    <string name="send_data">send data</string>
+    <string name="button">Button</string>
+    <string name="open_nav">Open Navigation Drawer</string>
+    <string name="close_nav">Close Navigation Drawer</string>
 </resources>

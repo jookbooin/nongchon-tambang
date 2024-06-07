@@ -10,18 +10,17 @@ import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import androidx.activity.ComponentActivity
-
-import androidx.activity.viewModels
-import androidx.lifecycle.Observer
 import com.capstone.nongchown.Model.ForegroundService
-
 import com.capstone.nongchown.R
-import com.capstone.nongchown.ViewModel.AccidentViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class AccidentActivity : ComponentActivity() {
 
-    val accidentViewModel by viewModels<AccidentViewModel>()
-
+    var timer =0
+    private lateinit var nowContext: Context
     companion object {
         private var instance: AccidentActivity? = null
 
@@ -39,9 +38,9 @@ class AccidentActivity : ComponentActivity() {
             val binder = service as ForegroundService.LocalBinder
             foregroundService = binder.getService()
             if (countData == 0) {
-                foregroundService?.userAccident()
+                //foregroundService?.userAccident()
             } else {
-                foregroundService?.changeTimer(countData)
+                //foregroundService?.changeTimer(countData)
             }
 
         }
@@ -53,30 +52,37 @@ class AccidentActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        //foregroundService?.getTimerCount()?.observe(this) { count ->
+         //   updateTimerText(count)
+        //}
 
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         instance = this
-        Intent(this, ForegroundService::class.java).also { intent ->
-            bindService(intent, connection, Context.BIND_AUTO_CREATE)
-        }
+        nowContext=this
+        val serviceIntent=Intent(this, ForegroundService::class.java)
+        bindService(serviceIntent, connection, Context.BIND_AUTO_CREATE)
+
         Log.d("test", "accident")
         setContentView(R.layout.accident_notification)
 
 
-        accidentViewModel.getTimerCount().observe(this, Observer{ count ->
-            updateTimerText(count)
-        })
-
         val intent = intent
-        countData = intent?.getIntExtra("timer", 0)!!
-        if (countData != 0) {
-            if (countData != null) {
-                updateTimerText(countData)
-            }
-        }
+        timer = savedInstanceState?.getInt("timer") ?: intent.getIntExtra("timer", 0)
+        updateTimerText(timer)
+       CoroutineScope(Dispatchers.Main).launch {
+           while (timer > 0) {
+               timer--
+               updateTimerText(timer)
+               delay(1000)
+
+
+           }
+           finish()
+       }
+
 
 
 
@@ -85,9 +91,9 @@ class AccidentActivity : ComponentActivity() {
             Log.d("test", "btnON")
             //accidentViewModel.userSafe()
             foregroundService?.userSafe()
-            
-            val mainIntent = Intent(this, MainActivity::class.java)
-            startActivity(mainIntent)
+            finish()
+            val mainIntent = Intent(this, UserProfileActivity::class.java)
+            finish()
 
         }
     }
@@ -95,4 +101,6 @@ class AccidentActivity : ComponentActivity() {
     public fun updateTimerText(count: Int) {
         findViewById<TextView>(R.id.timer).text = count.toString()
     }
+
+
 }

@@ -15,6 +15,7 @@ circleimageview = "3.1.0"
 firebaseFirestoreKtx = "25.0.0"
 firebaseCommonKtx = "21.0.0"
 firebaseDatabaseKtx = "21.0.0"
+mockitoKotlin = "5.3.1"
 
 
 [libraries]
@@ -33,6 +34,7 @@ circleimageview = { group = "de.hdodenhof", name = "circleimageview", version.re
 firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebaseFirestoreKtx" }
 firebase-common-ktx = { group = "com.google.firebase", name = "firebase-common-ktx", version.ref = "firebaseCommonKtx" }
 firebase-database-ktx = { group = "com.google.firebase", name = "firebase-database-ktx", version.ref = "firebaseDatabaseKtx" }
+mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockitoKotlin" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
