@@ -6,7 +6,7 @@
 |----------------------------------------------------------|
 | <img src="https://github.com/user-attachments/assets/b7f94f7f-1ce7-4bf7-b8bf-540cab34b95a" width="300" height="500"> |
 
-# 프로젝트 배경 
+# 프로젝트 배경 및 소개
 
 농기계 사고는 매년 1,000건 이상 발생하고 있습니다.
 농기계는 별다른 안전장치가 없기 때문에, 사고 발생 시 일반 사고에 비해 치사율이 7배나 높습니다.
@@ -20,7 +20,10 @@
 | <p align="center"><img src="https://github.com/user-attachments/assets/c2b19a49-afcb-440f-ac68-8adab8ea15e6" width="450" height="300"></p> |
 | <p align="center">소방청 자료 제공</p>|
 
-# 프로젝트 개요 
+농기계를 사용하는 주 연령대는 50대 이상이며, 사고는 주로 교통사고 및 홀로 작업하는 경우에 많이 발생합니다. 따라서 본 프로젝트는 농기계 사고 발생 시 빠른 신고를 통해 골든 타임을 확보하는 것을 목적으로 하고 있습니다.
+
+# 프로젝트 동작 순서
+<img src="https://github.com/user-attachments/assets/8f9bf2f8-5ad3-4613-bb7b-7f5bd5fe45bd" width="900" height="700">
 
 
 # 스크린 샷
