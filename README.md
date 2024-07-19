@@ -23,7 +23,7 @@
 농기계를 사용하는 주 연령대는 50대 이상이며, 사고는 주로 교통사고 및 홀로 작업하는 경우에 많이 발생합니다. 따라서 본 프로젝트는 농기계 사고 발생 시 빠른 신고를 통해 골든 타임을 확보하는 것을 목적으로 하고 있습니다.
 
 # 프로젝트 동작 순서
-<img src="https://github.com/user-attachments/assets/8f9bf2f8-5ad3-4613-bb7b-7f5bd5fe45bd" width="900" height="700">
+<img src="https://github.com/user-attachments/assets/94ceceab-659c-46dc-9e27-5d2948a3b477" width="850" height="750">
 
 
 # 스크린 샷
